@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TechCore Industries | Engineering Excellence</title>
+    <meta name="description"
+        content="TechCore Industries delivers premium, cutting-edge engineering solutions worldwide. Complex problems, elegant solutions.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <!-- Background Elements -->
+    <div class="glow-bg glow-1"></div>
+    <div class="glow-bg glow-2"></div>
+    <div class="glow-bg glow-3"></div>
+
+    <!-- Navigation -->
+    <header class="navbar">
+        <div class="container nav-container">
+            <a href="#" class="logo">
+                <span class="logo-accent">Tech</span>Core
+            </a>
+            <nav class="nav-links">
+                <a href="#home">Home</a>
+                <a href="#about">About</a>
+                <a href="#services">Services</a>
+                <a href="#contact" class="btn btn-primary nav-btn">Get in Touch</a>
+            </nav>
+            <button class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="container hero-container grid-2">
+            <div class="hero-content fade-in-up">
+                <div class="badge">Advanced Engineering Solutions</div>
+                <h1 class="hero-title">Architecting the <span class="text-gradient">Future</span> of Industry</h1>
+                <p class="hero-text">We blend cutting-edge technology with robust mechanical, electrical, and structural
+                    engineering to build unparalleled systems that power tomorrow's world.</p>
+                <div class="hero-actions">
+                    <a href="#services" class="btn btn-primary">Explore Services</a>
+                    <a href="#contact" class="btn btn-secondary">Discuss a Project</a>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <span class="stat-number">15+</span>
+                        <span class="stat-label">Years of Innovation</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">250+</span>
+                        <span class="stat-label">Projects Delivered</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-visual fade-in">
+                <div class="abstract-shape">
+                    <!-- Abstract geometric elements -->
+                    <div class="ring r1"></div>
+                    <div class="ring r2"></div>
+                    <div class="ring r3"></div>
+                    <div class="core"></div>
+
+                    <div class="floating-box fb1">
+                        <i class="fa-solid fa-microchip"></i>
+                        <span>System Integrity</span>
+                    </div>
+                    <div class="floating-box fb2">
+                        <i class="fa-solid fa-gears"></i>
+                        <span>Precision Auth</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="section">
+        <div class="container">
+            <div class="section-header text-center fade-in-up">
+                <h2 class="section-title">Beyond Standard <span class="text-gradient">Engineering</span></h2>
+                <p class="section-subtitle">We don't just solve problems; we redefine what's possible through rigorous
+                    analysis and creative design.</p>
+            </div>
+            <div class="grid-2 align-center mt-xl">
+                <div class="about-image glass-panel fade-in-left">
+                    <div class="tech-grid-overlay"></div>
+                    <div class="about-stats">
+                        <div class="about-stat-bar">
+                            <span>Structural</span><span class="bar" style="--w: 95%"></span>
+                        </div>
+                        <div class="about-stat-bar">
+                            <span>Mechatronics</span><span class="bar" style="--w: 88%"></span>
+                        </div>
+                        <div class="about-stat-bar">
+                            <span>Software</span><span class="bar" style="--w: 92%"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="about-content fade-in-right">
+                    <h3>Pioneering the Complex, Standardizing the Elite</h3>
+                    <p>At TechCore Industries, our methodology is built on a foundation of absolute precision. We tackle
+                        infrastructure, automated systems, and critical software with an uncompromising commitment to
+                        quality.</p>
+                    <ul class="feature-list">
+                        <li><i class="fas fa-check-circle"></i> ISO-Certified Quality Management</li>
+                        <li><i class="fas fa-check-circle"></i> Sustainable & Efficient Designs</li>
+                        <li><i class="fas fa-check-circle"></i> End-to-End Project Execution</li>
+                        <li><i class="fas fa-check-circle"></i> Advanced Computational Modeling</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Services Section -->
+    <section id="services" class="section bg-darker">
+        <div class="container">
+            <div class="section-header fade-in-up">
+                <h2 class="section-title">Core <span class="text-gradient">Competencies</span></h2>
+                <p class="section-subtitle">Comprehensive engineering disciplines integrated for complex project
+                    delivery.</p>
+            </div>
+
+            <div class="services-grid mt-lg">
+                <div class="service-card glass-panel fade-in-up" style="--delay: 0.1s">
+                    <div class="service-icon"><i class="fas fa-industry"></i></div>
+                    <h3 class="service-title">Industrial Robotics</h3>
+                    <p class="service-text">Design and implementation of automated assembly lines and specialized
+                        robotic manipulator arms.</p>
+                </div>
+
+                <div class="service-card glass-panel fade-in-up" style="--delay: 0.2s">
+                    <div class="service-icon"><i class="fas fa-bolt"></i></div>
+                    <h3 class="service-title">Power Systems</h3>
+                    <p class="service-text">High-voltage substation design, smart grid integration, and renewable energy
+                        infrastructure.</p>
+                </div>
+
+                <div class="service-card glass-panel fade-in-up" style="--delay: 0.3s">
+                    <div class="service-icon"><i class="fas fa-code"></i></div>
+                    <h3 class="service-title">Control Software</h3>
+                    <p class="service-text">SCADA systems, embedded C/C++ controllers, and highly concurrent machine
+                        monitoring platforms.</p>
+                </div>
+
+                <div class="service-card glass-panel fade-in-up" style="--delay: 0.4s">
+                    <div class="service-icon"><i class="fas fa-building"></i></div>
+                    <h3 class="service-title">Structural Dynamics</h3>
+                    <p class="service-text">Finite element analysis (FEA), seismic retrofitting, and advanced materials
+                        engineering.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="section">
+        <div class="container grid-2 align-start">
+            <div class="contact-info fade-in-left">
+                <h2 class="section-title">Initiate a <span class="text-gradient">Dialogue</span></h2>
+                <p class="section-subtitle mt-sm">Whether you have a specific project requirement or need technical
+                    consultation, our engineering team is ready to assist.</p>
+
+                <div class="contact-methods mt-lg">
+                    <div class="contact-method">
+                        <div class="cm-icon"><i class="fas fa-envelope"></i></div>
+                        <div class="cm-details">
+                            <h4>Email Communication</h4>
+                            <p>engineering@techcore-industries.com</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="contact-form-wrapper glass-panel fade-in-right">
+                <form id="contactForm" onsubmit="event.preventDefault(); sendMessage();">
+                    <div class="form-group">
+                        <label for="name">Lead Contact Name</label>
+                        <input type="text" id="name" name="name" required placeholder="Jane Doe">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Corporate Email</label>
+                        <input type="email" id="email" name="email" required placeholder="jane@company.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="message">Project Specifications / Inquiry</label>
+                        <textarea id="message" name="message" rows="5" required
+                            placeholder="Detail your technical requirements or questions here..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary submit-btn" id="submitBtn">
+                        <span>Transmit Message</span>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                    <div id="response" class="form-response"></div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container grid-footer">
+            <div class="footer-brand">
+                <a href="#" class="logo">
+                    <span class="logo-accent">Tech</span>Core
+                </a>
+                <p class="mt-sm text-sm" style="color: var(--text-muted);">Engineering the future with precision.</p>
+            </div>
+            <div class="footer-links">
+                <h4>Divisions</h4>
+                <a href="#">Applied Robotics</a>
+                <a href="#">Energy Infrastructure</a>
+            </div>
+            <div class="footer-links">
+                <h4>Company</h4>
+                <a href="#">About Us</a>
+                <a href="#">Careers</a>
+            </div>
+        </div>
+        <div class="footer-bottom text-center">
+            <p>&copy; 2026 TechCore Industries. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>
