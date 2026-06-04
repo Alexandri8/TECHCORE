@@ -902,4 +902,69 @@ a {
     .contact-form-wrapper {
         padding: 2rem 1rem;
     }
-}
+    }
+
+    /* ================== Modals & Notifications ================== */
+    .modal {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+    backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+    position: relative;
+    margin: 15% auto;
+    padding: 3rem;
+    width: 90%;
+    max-width: 450px;
+    text-align: center;
+    }
+
+    .close-modal {
+    position: absolute;
+    right: 1.5rem;
+    top: 1rem;
+    color: var(--text-muted);
+    font-size: 2rem;
+    cursor: pointer;
+    }
+
+    .close-modal:hover {
+    color: white;
+    }
+
+    .w-100 {
+    width: 100%;
+    }
+
+    .notification {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    z-index: 3000;
+    font-weight: 600;
+    animation: slideInRight 0.5s ease-out;
+    }
+
+    .notification.success {
+    background: #10b981;
+    color: white;
+    }
+
+    .notification.error {
+    background: #ef4444;
+    color: white;
+    }
+
+    @keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+    }
