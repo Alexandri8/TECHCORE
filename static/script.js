@@ -150,7 +150,7 @@ function payWithPaystack() {
             "Content-Type": "application/json",
             "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
-        body: JSON.stringify({ email, amount })
+        body: JSON.stringify({ email })
     })
     .then(response => response.json())
     .then(data => {
