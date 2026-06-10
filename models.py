@@ -21,7 +21,8 @@ class ContactMessage(db.Model):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), nullable=False)
     message = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    # Optimization: Added index on timestamp to speed up ordering in admin view
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
     def __init__(self, name, email, message):
         self.name = name
@@ -37,7 +38,8 @@ class Payment(db.Model):
     amount = db.Column(db.Float, nullable=False)
     reference = db.Column(db.String(100), unique=True, nullable=False)
     status = db.Column(db.String(20), default='pending') # pending, success, failed
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    # Optimization: Added index on timestamp to speed up ordering in admin view
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, index=True)
 
     def __repr__(self):
         return f'<Payment {self.reference} - {self.status}>'

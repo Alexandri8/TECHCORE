@@ -123,10 +123,26 @@ function closePaymentModal() {
 
 function payWithPaystack() {
     const email = document.getElementById("payEmail").value;
+    const payBtn = document.getElementById("payBtn");
+
     if (!email) {
         alert("Please enter your email.");
         return;
     }
+
+    // UI Loading state
+    payBtn.classList.add('loading');
+    payBtn.disabled = true;
+
+    // Inject a spinner temporarily inside button (CSS handles display)
+    if (!payBtn.querySelector('.loader')) {
+        const loader = document.createElement('div');
+        loader.className = 'loader';
+        payBtn.appendChild(loader);
+    }
+
+    // Amount is ₦5,000 = 500,000 Kobo
+    const amount = 500000; 
 
     fetch("/initialize-payment", {
         method: "POST",
@@ -142,10 +158,14 @@ function payWithPaystack() {
             // Redirect to Paystack checkout page
             window.location.href = data.data.authorization_url;
         } else {
+            payBtn.classList.remove('loading');
+            payBtn.disabled = false;
             alert("Payment initialization failed: " + data.message);
         }
     })
     .catch(error => {
+        payBtn.classList.remove('loading');
+        payBtn.disabled = false;
         console.error("Payment Error:", error);
         alert("An error occurred during payment initialization.");
     });
