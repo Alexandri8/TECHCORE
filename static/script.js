@@ -128,16 +128,13 @@ function payWithPaystack() {
         return;
     }
 
-    // Amount is ₦5,000 = 500,000 Kobo
-    const amount = 500000; 
-
     fetch("/initialize-payment", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
             "X-CSRFToken": document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
-        body: JSON.stringify({ email, amount })
+        body: JSON.stringify({ email })
     })
     .then(response => response.json())
     .then(data => {

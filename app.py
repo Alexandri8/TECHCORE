@@ -114,10 +114,13 @@ def contact():
 @app.route("/initialize-payment", methods=["POST"])
 def initialize_payment():
     email = request.json.get("email")
-    amount = request.json.get("amount")
     
-    if not email or not amount:
-        return jsonify({"status": False, "message": "Email and amount are required."}), 400
+    # Security: Hardcode amount server-side to prevent client-side manipulation
+    # ₦5,000 = 500,000 Kobo
+    amount = 500000
+
+    if not email:
+        return jsonify({"status": False, "message": "Email is required."}), 400
 
     # Generate unique reference
     reference = str(uuid.uuid4())
