@@ -13,6 +13,10 @@
         th, td { padding: 12px; border: 1px solid #ddd; text-align: left; }
         th { background-color: #f8f9fa; }
         tr:nth-child(even) { background-color: #f2f2f2; }
+        .pagination { margin-top: 1rem; display: flex; gap: 10px; align-items: center; justify-content: center; }
+        .pagination a { padding: 8px 16px; text-decoration: none; border: 1px solid #ddd; color: #333; border-radius: 4px; }
+        .pagination a:hover { background-color: #f0f0f0; }
+        .pagination span { font-weight: bold; }
     </style>
 </head>
 <body>
@@ -31,7 +35,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for msg in messages %}
+                {% for msg in messages.items %}
                 <tr>
                     <td>{{ msg.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
                     <td>{{ msg.name }}</td>
@@ -41,6 +45,17 @@
                 {% endfor %}
             </tbody>
         </table>
+
+        <!-- Message Pagination -->
+        <div class="pagination">
+            {% if messages.has_prev %}
+                <a href="{{ url_for('admin', message_page=messages.prev_num, payment_page=payments.page) }}">Previous</a>
+            {% endif %}
+            <span>Page {{ messages.page }} of {{ messages.pages }}</span>
+            {% if messages.has_next %}
+                <a href="{{ url_for('admin', message_page=messages.next_num, payment_page=payments.page) }}">Next</a>
+            {% endif %}
+        </div>
 
         <h1>Transaction History</h1>
         <table>
@@ -54,7 +69,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% for pay in payments %}
+                {% for pay in payments.items %}
                 <tr>
                     <td>{{ pay.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
                     <td>{{ pay.email }}</td>
@@ -69,6 +84,17 @@
                 {% endfor %}
             </tbody>
         </table>
+
+        <!-- Payment Pagination -->
+        <div class="pagination">
+            {% if payments.has_prev %}
+                <a href="{{ url_for('admin', message_page=messages.page, payment_page=payments.prev_num) }}">Previous</a>
+            {% endif %}
+            <span>Page {{ payments.page }} of {{ payments.pages }}</span>
+            {% if payments.has_next %}
+                <a href="{{ url_for('admin', message_page=messages.page, payment_page=payments.next_num) }}">Next</a>
+            {% endif %}
+        </div>
     </div>
 </body>
 </html>
