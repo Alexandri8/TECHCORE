@@ -87,8 +87,17 @@ def logout():
 @app.route("/admin")
 @login_required
 def admin():
-    messages = ContactMessage.query.order_by(ContactMessage.timestamp.desc()).all()
-    payments = Payment.query.order_by(Payment.timestamp.desc()).all()
+    # Optimization: Added pagination to avoid loading all records at once
+    message_page = request.args.get('message_page', 1, type=int)
+    payment_page = request.args.get('payment_page', 1, type=int)
+    per_page = 10
+
+    messages = ContactMessage.query.order_by(ContactMessage.timestamp.desc()).paginate(
+        page=message_page, per_page=per_page, error_out=False
+    )
+    payments = Payment.query.order_by(Payment.timestamp.desc()).paginate(
+        page=payment_page, per_page=per_page, error_out=False
+    )
     return render_template("admin.html", messages=messages, payments=payments)
 
 @app.route("/contact", methods=["POST"])
