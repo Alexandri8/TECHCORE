@@ -209,6 +209,24 @@ def verify_payment():
         db.session.commit()
     return render_template("index.html", payment_status="failed")
 
+@app.after_request
+def add_security_headers(response):
+    """Add security headers to every response."""
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    # Content Security Policy: default-src 'self' allows only our own domain
+    # script-src 'self' 'unsafe-inline' allows our scripts (unsafe-inline is used in some templates)
+    # style-src and font-src allow external resources from trusted domains (Google Fonts, Font Awesome)
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
+        "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; "
+        "img-src 'self' data:;"
+    )
+    return response
+
 if __name__ == "__main__":
     # Security: Debug mode is controlled by environment variable
     app.run(debug=os.getenv('FLASK_DEBUG', 'False').lower() == 'true')
