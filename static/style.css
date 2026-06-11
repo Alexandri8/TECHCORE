@@ -281,6 +281,15 @@ a {
     border-color: rgba(255, 255, 255, 0.2);
 }
 
+/* ================== Accessibility ================== */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 3px;
+}
+
 /* ================== Hero Section ================== */
 .hero {
     min-height: 100vh;
@@ -902,10 +911,10 @@ a {
     .contact-form-wrapper {
         padding: 2rem 1rem;
     }
-    }
+}
 
-    /* ================== Modals & Notifications ================== */
-    .modal {
+/* ================== Modals & Notifications ================== */
+.modal {
     display: none;
     position: fixed;
     z-index: 2000;
@@ -913,20 +922,20 @@ a {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.8);
+    background-color: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(5px);
-    }
+}
 
-    .modal-content {
+.modal-content {
     position: relative;
     margin: 15% auto;
     padding: 3rem;
     width: 90%;
     max-width: 450px;
     text-align: center;
-    }
+}
 
-    .close-modal {
+.close-modal {
     position: absolute;
     right: 1.5rem;
     top: 1rem;
@@ -937,17 +946,17 @@ a {
     border: none;
     padding: 0;
     line-height: 1;
-    }
+}
 
-    .close-modal:hover {
+.close-modal:hover {
     color: white;
-    }
+}
 
-    .w-100 {
+.w-100 {
     width: 100%;
-    }
+}
 
-    .notification {
+.notification {
     position: fixed;
     top: 2rem;
     right: 2rem;
@@ -956,19 +965,74 @@ a {
     z-index: 3000;
     font-weight: 600;
     animation: slideInRight 0.5s ease-out;
-    }
+}
 
-    .notification.success {
+.notification.success {
     background: #10b981;
     color: white;
-    }
+}
 
-    .notification.error {
+.notification.error {
     background: #ef4444;
     color: white;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
     }
 
-    @keyframes slideInRight {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    to {
+        transform: translateX(0);
+        opacity: 1;
     }
+}
+
+/* Admin Login Styling */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: var(--bg-base);
+}
+
+.login-card {
+    background: var(--bg-panel);
+    backdrop-filter: blur(12px);
+    padding: 2.5rem;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.login-card h2 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: white;
+}
+
+.login-card .form-group label {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.login-card .btn-primary {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.login-card .error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    padding: 0.8rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-size: 0.9rem;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}

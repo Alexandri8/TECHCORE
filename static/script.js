@@ -44,9 +44,23 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }, 100);
+
 });
 
-// 3. Form Handling via Fetch API
+// 4. Notification System
+function showNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerText = message;
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 500);
+    }, 5000);
+}
+
+// 5. Form Handling via Fetch API
 function sendMessage() {
     const nameInput = document.getElementById("name");
     const emailInput = document.getElementById("email");
@@ -122,11 +136,12 @@ function closePaymentModal() {
 }
 
 function payWithPaystack() {
-    const email = document.getElementById("payEmail").value;
+    const emailInput = document.getElementById("payEmail");
+    const email = emailInput.value;
     const payBtn = document.getElementById("payBtn");
 
-    if (!email) {
-        alert("Please enter your email.");
+    if (!email || !emailInput.checkValidity()) {
+        showNotification("Please enter a valid email.", 'error');
         return;
     }
 
@@ -160,14 +175,14 @@ function payWithPaystack() {
         } else {
             payBtn.classList.remove('loading');
             payBtn.disabled = false;
-            alert("Payment initialization failed: " + data.message);
+            showNotification("Payment initialization failed: " + data.message, 'error');
         }
     })
     .catch(error => {
         payBtn.classList.remove('loading');
         payBtn.disabled = false;
         console.error("Payment Error:", error);
-        alert("An error occurred during payment initialization.");
+        showNotification("An error occurred during payment initialization.", 'error');
     });
 }
 

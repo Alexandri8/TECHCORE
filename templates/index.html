@@ -35,7 +35,7 @@
                 <a href="#services">Services</a>
                 <a href="#contact" class="btn btn-primary nav-btn">Get in Touch</a>
             </nav>
-            <button class="mobile-menu-btn">
+            <button class="mobile-menu-btn" aria-label="Open navigation menu">
                 <i class="fas fa-bars"></i>
             </button>
         </div>
@@ -168,7 +168,7 @@
                 <h3 class="text-gradient">Professional Consultation</h3>
                 <p>Secure a 1-on-1 technical session with our lead engineers.</p>
                 <button onclick="openPaymentModal()" class="btn btn-primary mt-md">
-                    <i class="fas fa-calendar-check"></i> Book for ₦5,000
+                    <i class="fas fa-calendar-check"></i> <span>Book for ₦5,000</span>
                 </button>
             </div>
         </div>
@@ -182,7 +182,7 @@
             <p>Please enter your email to proceed with the payment.</p>
             <div class="form-group">
                 <label for="payEmail">Email Address</label>
-                <input type="email" id="payEmail" placeholder="your@email.com" required>
+                <input type="email" id="payEmail" placeholder="your@email.com" required autocomplete="email">
             </div>
             <button onclick="payWithPaystack()" class="btn btn-primary w-100" id="payBtn">
                 <span>Proceed to Payment</span>
@@ -220,11 +220,11 @@
                 <form id="contactForm" onsubmit="event.preventDefault(); sendMessage();">
                     <div class="form-group">
                         <label for="name">Lead Contact Name</label>
-                        <input type="text" id="name" name="name" required placeholder="Jane Doe">
+                        <input type="text" id="name" name="name" required placeholder="Jane Doe" autocomplete="name">
                     </div>
                     <div class="form-group">
                         <label for="email">Corporate Email</label>
-                        <input type="email" id="email" name="email" required placeholder="jane@company.com">
+                        <input type="email" id="email" name="email" required placeholder="jane@company.com" autocomplete="email">
                     </div>
                     <div class="form-group">
                         <label for="message">Project Specifications / Inquiry</label>
@@ -235,7 +235,7 @@
                         <span>Transmit Message</span>
                         <i class="fas fa-paper-plane"></i>
                     </button>
-                    <div id="response" class="form-response"></div>
+                    <div id="response" class="form-response" aria-live="polite"></div>
                 </form>
             </div>
         </div>
