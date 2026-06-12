@@ -1,15 +1,26 @@
 // script.js - TechCore interactions and form handling
 
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Navigation background change on scroll
+    // 1. Navigation background change on scroll (Optimized with IntersectionObserver)
     const navbar = document.querySelector('.navbar');
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 50) {
-            navbar.classList.add('scrolled');
-        } else {
-            navbar.classList.remove('scrolled');
-        }
-    });
+    const hero = document.querySelector('.hero');
+
+    if (navbar && hero) {
+        const navObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                // If hero is NOT intersecting the top 50px, add 'scrolled' class
+                if (!entry.isIntersecting) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+            });
+        }, {
+            rootMargin: '-50px 0px 0px 0px',
+            threshold: 0
+        });
+        navObserver.observe(hero);
+    }
 
     // 2. Intersection Observer for Scroll Animations
     const observerOptions = {
@@ -34,17 +45,6 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 
     animateElements.forEach(el => observer.observe(el));
-
-    // Trigger animations for elements already in viewport on load
-    setTimeout(() => {
-        animateElements.forEach(el => {
-            const rect = el.getBoundingClientRect();
-            if (rect.top < window.innerHeight && rect.bottom >= 0) {
-                el.classList.add('visible');
-            }
-        });
-    }, 100);
-
 });
 
 // 4. Notification System
