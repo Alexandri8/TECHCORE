@@ -16,7 +16,8 @@ class SecurityHeadersTestCase(unittest.TestCase):
 
         csp = response.headers.get('Content-Security-Policy')
         self.assertIn("default-src 'self'", csp)
-        self.assertIn("script-src 'self' 'unsafe-inline'", csp)
+        self.assertIn("script-src 'self'", csp)
+        self.assertNotIn("'unsafe-inline'", csp.split(';')[1]) # Should not be in script-src
         self.assertIn("https://fonts.googleapis.com", csp)
         self.assertIn("https://cdnjs.cloudflare.com", csp)
 

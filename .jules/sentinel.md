@@ -7,3 +7,8 @@
 **Vulnerability:** The application was missing critical HTTP security headers (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, and CSP), leaving it vulnerable to Clickjacking and MIME-sniffing.
 **Learning:** Modern web applications should implement defense-in-depth by default. Flask doesn't add these headers automatically.
 **Prevention:** Use an `@app.after_request` decorator to consistently apply security headers across all responses.
+
+## 2026-06-25 - Content Security Policy Hardening (Eliminating 'unsafe-inline')
+**Vulnerability:** Use of `'unsafe-inline'` in the `script-src` directive of the Content Security Policy (CSP) weakens the protection against Cross-Site Scripting (XSS).
+**Learning:** To remove `'unsafe-inline'`, all inline JavaScript (event handlers like `onclick`, `onsubmit`) must be refactored into external scripts using `addEventListener`.
+**Prevention:** Avoid inline JavaScript during development to maintain a strict CSP. Implement global event listeners in a centralized JS file for better maintainability and security.

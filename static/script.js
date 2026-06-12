@@ -45,6 +45,29 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }, 100);
 
+    // 3. Event Listeners (Removed inline JS from HTML)
+    const contactForm = document.getElementById("contactForm");
+    if (contactForm) {
+        contactForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            sendMessage();
+        });
+    }
+
+    const openPaymentBtn = document.getElementById("openPaymentBtn");
+    if (openPaymentBtn) {
+        openPaymentBtn.addEventListener("click", openPaymentModal);
+    }
+
+    const closePaymentBtn = document.getElementById("closePaymentBtn");
+    if (closePaymentBtn) {
+        closePaymentBtn.addEventListener("click", closePaymentModal);
+    }
+
+    const payBtn = document.getElementById("payBtn");
+    if (payBtn) {
+        payBtn.addEventListener("click", payWithPaystack);
+    }
 });
 
 // 4. Notification System
