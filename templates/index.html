@@ -167,7 +167,7 @@
             <div class="section-header mt-xl text-center fade-in-up">
                 <h3 class="text-gradient">Professional Consultation</h3>
                 <p>Secure a 1-on-1 technical session with our lead engineers.</p>
-                <button onclick="openPaymentModal()" class="btn btn-primary mt-md">
+                <button id="openPaymentBtn" class="btn btn-primary mt-md">
                     <i class="fas fa-calendar-check"></i> <span>Book for ₦5,000</span>
                 </button>
             </div>
@@ -177,14 +177,14 @@
     <!-- Payment Modal (Hidden by default) -->
     <div id="paymentModal" class="modal">
         <div class="modal-content glass-panel">
-            <button class="close-modal" onclick="closePaymentModal()" aria-label="Close modal">&times;</button>
+            <button class="close-modal" id="closePaymentBtn" aria-label="Close modal">&times;</button>
             <h3>Book Your Session</h3>
             <p>Please enter your email to proceed with the payment.</p>
             <div class="form-group">
                 <label for="payEmail">Email Address</label>
                 <input type="email" id="payEmail" placeholder="your@email.com" required autocomplete="email">
             </div>
-            <button onclick="payWithPaystack()" class="btn btn-primary w-100" id="payBtn">
+            <button class="btn btn-primary w-100" id="payBtn">
                 <span>Proceed to Payment</span>
             </button>
         </div>
@@ -217,7 +217,7 @@
             </div>
 
             <div class="contact-form-wrapper glass-panel fade-in-right">
-                <form id="contactForm" onsubmit="event.preventDefault(); sendMessage();">
+                <form id="contactForm">
                     <div class="form-group">
                         <label for="name">Lead Contact Name</label>
                         <input type="text" id="name" name="name" required placeholder="Jane Doe" autocomplete="name">
