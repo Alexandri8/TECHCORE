@@ -22,6 +22,10 @@ PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY')
 # Security: TEST_MODE should be False by default in production
 TEST_MODE = os.getenv('TEST_MODE', 'False').lower() == 'true'
 
+# Performance: Use a global session for Paystack API to enable connection pooling
+# This reduces latency by avoiding repeated TCP/TLS handshakes
+paystack_session = requests.Session()
+
 # Database Configuration
 basedir = os.path.abspath(os.path.dirname(__file__))
 # Security: Allow DATABASE_URL from environment variable
@@ -166,7 +170,8 @@ def initialize_payment():
     }
     
     try:
-        response = requests.post("https://api.paystack.co/transaction/initialize", json=payload, headers=headers)
+        # Performance: Added timeout to prevent worker exhaustion
+        response = paystack_session.post("https://api.paystack.co/transaction/initialize", json=payload, headers=headers, timeout=10)
         res_data = response.json()
         
         if res_data.get("status"):
@@ -202,7 +207,8 @@ def verify_payment():
     }
     
     try:
-        response = requests.get(f"https://api.paystack.co/transaction/verify/{reference}", headers=headers)
+        # Performance: Added timeout to prevent worker exhaustion
+        response = paystack_session.get(f"https://api.paystack.co/transaction/verify/{reference}", headers=headers, timeout=10)
         res_data = response.json()
         
         if res_data.get("status") and res_data["data"]["status"] == "success":
