@@ -14,6 +14,10 @@ app = Flask(__name__)
 # Security: Use environment variable for secret key, fallback to random key
 app.secret_key = os.getenv('SECRET_KEY', os.urandom(24).hex())
 
+# Security: Harden session cookies
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
 # CSRF Protection
 csrf = CSRFProtect(app)
 
@@ -222,17 +226,23 @@ def verify_payment():
 def add_security_headers(response):
     """Add security headers to every response."""
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    # Security: Prevent MIME-sniffing
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    # Security: Enable HSTS (1 year)
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+
     # Content Security Policy: default-src 'self' allows only our own domain
-    # script-src 'self' 'unsafe-inline' allows our scripts (unsafe-inline is used in some templates)
+    # script-src 'self' allows our scripts (removed 'unsafe-inline' for better security)
     # style-src and font-src allow external resources from trusted domains (Google Fonts, Font Awesome)
+    # frame-ancestors 'none' prevents the site from being embedded in frames
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline'; "
+        "script-src 'self'; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
         "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; "
-        "img-src 'self' data:;"
+        "img-src 'self' data:; "
+        "frame-ancestors 'none';"
     )
     return response
 

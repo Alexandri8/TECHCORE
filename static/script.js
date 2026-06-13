@@ -35,6 +35,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
     animateElements.forEach(el => observer.observe(el));
 
+    // 3. Event Listeners for Buttons and Forms
+    const openPaymentBtn = document.getElementById("openPaymentBtn");
+    if (openPaymentBtn) {
+        openPaymentBtn.addEventListener("click", openPaymentModal);
+    }
+
+    const closePaymentBtn = document.getElementById("closePaymentBtn");
+    if (closePaymentBtn) {
+        closePaymentBtn.addEventListener("click", closePaymentModal);
+    }
+
+    const payBtn = document.getElementById("payBtn");
+    if (payBtn) {
+        payBtn.addEventListener("click", payWithPaystack);
+    }
+
+    const contactForm = document.getElementById("contactForm");
+    if (contactForm) {
+        contactForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            sendMessage();
+        });
+    }
+
     // Trigger animations for elements already in viewport on load
     setTimeout(() => {
         animateElements.forEach(el => {
