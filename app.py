@@ -10,6 +10,9 @@ from dotenv import load_dotenv
 # Load environment variables from .env file
 load_dotenv()
 
+# Optimization: Global session for connection pooling
+paystack_session = requests.Session()
+
 app = Flask(__name__)
 # Security: Use environment variable for secret key, fallback to random key
 app.secret_key = os.getenv('SECRET_KEY', os.urandom(24).hex())
@@ -170,7 +173,8 @@ def initialize_payment():
     }
     
     try:
-        response = requests.post("https://api.paystack.co/transaction/initialize", json=payload, headers=headers)
+        # Optimization: Use global session for connection pooling
+        response = paystack_session.post("https://api.paystack.co/transaction/initialize", json=payload, headers=headers)
         res_data = response.json()
         
         if res_data.get("status"):
@@ -187,10 +191,18 @@ def initialize_payment():
 @app.route("/verify-payment")
 def verify_payment():
     reference = request.args.get("reference")
+    # Optimization: Early return if reference is missing
     if not reference:
         return redirect(url_for('home'))
         
     payment = Payment.query.filter_by(reference=reference).first()
+
+    # Optimization: Early return if payment not found or already successful
+    if not payment:
+        return redirect(url_for('home'))
+
+    if payment.status == "success":
+        return render_template("index.html", payment_status="success")
 
     if TEST_MODE:
         if payment:
@@ -206,7 +218,8 @@ def verify_payment():
     }
     
     try:
-        response = requests.get(f"https://api.paystack.co/transaction/verify/{reference}", headers=headers)
+        # Optimization: Use global session for connection pooling
+        response = paystack_session.get(f"https://api.paystack.co/transaction/verify/{reference}", headers=headers)
         res_data = response.json()
         
         if res_data.get("status") and res_data["data"]["status"] == "success":
