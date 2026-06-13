@@ -30,6 +30,10 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 # Security: Allow DATABASE_URL from environment variable
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///' + os.path.join(basedir, 'instance', 'database.db'))
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# Security: Harden session cookies
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'False').lower() == 'true'
 
 db.init_app(app)
 
@@ -237,15 +241,19 @@ def add_security_headers(response):
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    # Security: HSTS (Strict-Transport-Security)
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+
     # Content Security Policy: default-src 'self' allows only our own domain
-    # script-src 'self' 'unsafe-inline' allows our scripts (unsafe-inline is used in some templates)
     # style-src and font-src allow external resources from trusted domains (Google Fonts, Font Awesome)
+    # frame-ancestors 'none' prevents the site from being embedded in iframes
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline'; "
+        "script-src 'self'; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
         "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; "
-        "img-src 'self' data:;"
+        "img-src 'self' data:; "
+        "frame-ancestors 'none';"
     )
     return response
 

@@ -45,6 +45,60 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 
     animateElements.forEach(el => observer.observe(el));
+
+    // Character Counter for Contact Form
+    const messageInput = document.getElementById("message");
+    const charCounter = document.getElementById("charCounter");
+    if (messageInput && charCounter) {
+        messageInput.addEventListener("input", () => {
+            const length = messageInput.value.length;
+            charCounter.innerText = `${length} / 1000`;
+        });
+    }
+
+    // Modal Keyboard Accessibility
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            const modal = document.getElementById("paymentModal");
+            if (modal && modal.style.display === "block") {
+                closePaymentModal();
+            }
+        }
+    });
+
+    // Trigger animations for elements already in viewport on load
+    setTimeout(() => {
+        animateElements.forEach(el => {
+            const rect = el.getBoundingClientRect();
+            if (rect.top < window.innerHeight && rect.bottom >= 0) {
+                el.classList.add('visible');
+            }
+        });
+    }, 100);
+
+    // 3. Event Listeners (Removed inline JS from HTML)
+    const contactForm = document.getElementById("contactForm");
+    if (contactForm) {
+        contactForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            sendMessage();
+        });
+    }
+
+    const openPaymentBtn = document.getElementById("openPaymentBtn");
+    if (openPaymentBtn) {
+        openPaymentBtn.addEventListener("click", openPaymentModal);
+    }
+
+    const closePaymentBtn = document.getElementById("closePaymentBtn");
+    if (closePaymentBtn) {
+        closePaymentBtn.addEventListener("click", closePaymentModal);
+    }
+
+    const payBtn = document.getElementById("payBtn");
+    if (payBtn) {
+        payBtn.addEventListener("click", payWithPaystack);
+    }
 });
 
 // 4. Notification System
@@ -111,6 +165,8 @@ function sendMessage() {
             nameInput.value = '';
             emailInput.value = '';
             messageInput.value = '';
+            const charCounter = document.getElementById("charCounter");
+            if (charCounter) charCounter.innerText = "0 / 1000";
 
             // Hide message after a while
             setTimeout(() => {
@@ -129,6 +185,8 @@ function sendMessage() {
 // 4. Payment Handling
 function openPaymentModal() {
     document.getElementById("paymentModal").style.display = "block";
+    const payEmail = document.getElementById("payEmail");
+    if (payEmail) payEmail.focus();
 }
 
 function closePaymentModal() {
