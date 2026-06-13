@@ -51,6 +51,8 @@ document.addEventListener("DOMContentLoaded", () => {
 function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
+    notification.setAttribute('role', 'status');
+    notification.setAttribute('aria-live', 'polite');
     notification.innerText = message;
     document.body.appendChild(notification);
 
@@ -127,12 +129,25 @@ function sendMessage() {
 }
 
 // 4. Payment Handling
+let lastFocusedElement;
+
 function openPaymentModal() {
-    document.getElementById("paymentModal").style.display = "block";
+    lastFocusedElement = document.activeElement;
+    const modal = document.getElementById("paymentModal");
+    modal.style.display = "block";
+
+    // Focus the first input field
+    const emailInput = document.getElementById("payEmail");
+    if (emailInput) {
+        setTimeout(() => emailInput.focus(), 50);
+    }
 }
 
 function closePaymentModal() {
     document.getElementById("paymentModal").style.display = "none";
+    if (lastFocusedElement) {
+        lastFocusedElement.focus();
+    }
 }
 
 function payWithPaystack() {
@@ -190,6 +205,16 @@ function payWithPaystack() {
 window.onclick = function(event) {
     const modal = document.getElementById("paymentModal");
     if (event.target == modal) {
-        modal.style.display = "none";
+        closePaymentModal();
     }
 }
+
+// Close modal on Escape key
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+        const modal = document.getElementById("paymentModal");
+        if (modal.style.display === "block") {
+            closePaymentModal();
+        }
+    }
+});
