@@ -31,6 +31,8 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 # Security: Allow DATABASE_URL from environment variable
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///' + os.path.join(basedir, 'instance', 'database.db'))
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# Security: Limit request size to 1MB
+app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
 # Security: Harden session cookies
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
@@ -127,6 +129,10 @@ def contact():
     if not name or not email or not message:
         return jsonify({"status": "Missing required fields"}), 400
 
+    # Security: Server-side length validation
+    if len(name) > 100 or len(email) > 120 or len(message) > 1000:
+        return jsonify({"status": "Input exceeds maximum allowed length"}), 400
+
     try:
         new_message = ContactMessage(name=name, email=email, message=message)
         db.session.add(new_message)
@@ -183,6 +189,8 @@ def initialize_payment():
     }
     
     try:
+        # Optimization: Use global session for connection pooling
+        # Security: Add timeout to prevent worker exhaustion
         # Optimization: Use global session for connection pooling and added timeout to prevent hanging
         response = paystack_session.post("https://api.paystack.co/transaction/initialize", json=payload, headers=headers, timeout=10)
         res_data = response.json()
@@ -228,6 +236,8 @@ def verify_payment():
     }
     
     try:
+        # Optimization: Use global session for connection pooling
+        # Security: Add timeout to prevent worker exhaustion
         # Optimization: Use global session for connection pooling and added timeout to prevent hanging
         response = paystack_session.get(f"https://api.paystack.co/transaction/verify/{reference}", headers=headers, timeout=10)
         res_data = response.json()
@@ -263,7 +273,10 @@ def add_security_headers(response):
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
         "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; "
         "img-src 'self' data:; "
-        "frame-ancestors 'none';"
+        "frame-ancestors 'none'; "
+        "object-src 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self';"
     )
     return response
 
