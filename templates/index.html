@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
-<body>
+<body data-payment-status="{{ payment_status }}">
     <!-- Background Elements -->
     <div class="glow-bg glow-1"></div>
     <div class="glow-bg glow-2"></div>
@@ -167,7 +167,7 @@
             <div class="section-header mt-xl text-center fade-in-up">
                 <h3 class="text-gradient">Professional Consultation</h3>
                 <p>Secure a 1-on-1 technical session with our lead engineers.</p>
-                <button id="openPaymentBtn" class="btn btn-primary mt-md">
+                <button id="openPaymentBtn" class="btn btn-primary mt-md" aria-haspopup="dialog" aria-expanded="false">
                     <i class="fas fa-calendar-check"></i> <span>Book for ₦5,000</span>
                 </button>
             </div>
@@ -175,10 +175,10 @@
     </section>
 
     <!-- Payment Modal (Hidden by default) -->
-    <div id="paymentModal" class="modal">
+    <div id="paymentModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <div class="modal-content glass-panel">
             <button class="close-modal" id="closePaymentBtn" aria-label="Close modal">&times;</button>
-            <h3>Book Your Session</h3>
+            <h3 id="modalTitle">Book Your Session</h3>
             <p>Please enter your email to proceed with the payment.</p>
             <div class="form-group">
                 <label for="payEmail">Email Address</label>
@@ -190,12 +190,6 @@
         </div>
     </div>
 
-    <!-- Payment Notifications -->
-    {% if payment_status == 'success' %}
-    <div class="notification success">Payment Successful! We will contact you shortly.</div>
-    {% elif payment_status == 'failed' %}
-    <div class="notification error">Payment Failed. Please try again.</div>
-    {% endif %}
 
     <!-- Contact Section -->
     <section id="contact" class="section">
