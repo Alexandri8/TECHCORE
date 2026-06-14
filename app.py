@@ -5,6 +5,7 @@ from flask_wtf.csrf import CSRFProtect
 import os
 import requests
 import uuid
+from sqlalchemy import event
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -36,6 +37,15 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'False').lower() == 'true'
 
 db.init_app(app)
+
+# Optimization: Enable WAL mode for SQLite to improve concurrency
+with app.app_context():
+    @event.listens_for(db.engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        if app.config['SQLALCHEMY_DATABASE_URI'].startswith("sqlite"):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL")
+            cursor.close()
 
 # Login Manager Configuration
 login_manager = LoginManager()
@@ -173,8 +183,8 @@ def initialize_payment():
     }
     
     try:
-        # Optimization: Use global session for connection pooling
-        response = paystack_session.post("https://api.paystack.co/transaction/initialize", json=payload, headers=headers)
+        # Optimization: Use global session for connection pooling and added timeout to prevent hanging
+        response = paystack_session.post("https://api.paystack.co/transaction/initialize", json=payload, headers=headers, timeout=10)
         res_data = response.json()
         
         if res_data.get("status"):
@@ -218,8 +228,8 @@ def verify_payment():
     }
     
     try:
-        # Optimization: Use global session for connection pooling
-        response = paystack_session.get(f"https://api.paystack.co/transaction/verify/{reference}", headers=headers)
+        # Optimization: Use global session for connection pooling and added timeout to prevent hanging
+        response = paystack_session.get(f"https://api.paystack.co/transaction/verify/{reference}", headers=headers, timeout=10)
         res_data = response.json()
         
         if res_data.get("status") and res_data["data"]["status"] == "success":
