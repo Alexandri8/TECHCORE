@@ -36,5 +36,25 @@ class SecurityTestCase(unittest.TestCase):
             self.assertIsNotNone(payment)
             self.assertEqual(payment.amount, 5000.0)
 
+    def test_contact_form_length_validation(self):
+        # Test name too long
+        response = self.client.post('/contact',
+                                    data=json.dumps({'name': 'a' * 101, 'email': 'test@example.com', 'message': 'hello'}),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Input exceeds maximum allowed length", json.loads(response.data)['status'])
+
+        # Test email too long
+        response = self.client.post('/contact',
+                                    data=json.dumps({'name': 'test', 'email': 'a' * 121 + '@example.com', 'message': 'hello'}),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+
+        # Test message too long
+        response = self.client.post('/contact',
+                                    data=json.dumps({'name': 'test', 'email': 'test@example.com', 'message': 'a' * 1001}),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+
 if __name__ == '__main__':
     unittest.main()
