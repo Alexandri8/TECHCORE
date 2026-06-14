@@ -1,5 +1,7 @@
 // script.js - TechCore interactions and form handling
 
+let lastFocusedElement;
+
 document.addEventListener("DOMContentLoaded", () => {
     // 1. Navigation background change on scroll (Optimized with IntersectionObserver)
     const navbar = document.querySelector('.navbar');
@@ -60,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
             const modal = document.getElementById("paymentModal");
-            if (modal && modal.style.display === "block") {
+            if (modal && (modal.style.display === "block" || modal.classList.contains('show'))) {
                 closePaymentModal();
             }
         }
@@ -98,6 +100,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const payBtn = document.getElementById("payBtn");
     if (payBtn) {
         payBtn.addEventListener("click", payWithPaystack);
+    }
+
+    // 4. Handle Server-side Payment Notifications
+    const paymentStatus = document.body.dataset.paymentStatus;
+    if (paymentStatus === 'success') {
+        showNotification("Payment Successful! We will contact you shortly.", 'success');
+    } else if (paymentStatus === 'failed') {
+        showNotification("Payment Failed. Please try again.", 'error');
     }
 });
 
@@ -158,8 +168,20 @@ function sendMessage() {
         .then(data => {
             // Success
             submitBtn.classList.remove('loading');
+
+            // Visual feedback on button
+            const originalContent = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span>Message Sent</span> <i class="fas fa-check"></i>';
+            submitBtn.classList.add('btn-success');
+
             responseBox.className = 'form-response show success';
             responseBox.innerText = data.status || "Transmission successful. Acknowledged.";
+
+            // Reset button after 3 seconds
+            setTimeout(() => {
+                submitBtn.innerHTML = originalContent;
+                submitBtn.classList.remove('btn-success');
+            }, 3000);
 
             // Clear form
             nameInput.value = '';
@@ -184,13 +206,27 @@ function sendMessage() {
 
 // 4. Payment Handling
 function openPaymentModal() {
-    document.getElementById("paymentModal").style.display = "block";
+    lastFocusedElement = document.activeElement;
+    const modal = document.getElementById("paymentModal");
+    const openBtn = document.getElementById("openPaymentBtn");
+
+    modal.style.display = "block";
+    if (openBtn) openBtn.setAttribute('aria-expanded', 'true');
+
     const payEmail = document.getElementById("payEmail");
     if (payEmail) payEmail.focus();
 }
 
 function closePaymentModal() {
-    document.getElementById("paymentModal").style.display = "none";
+    const modal = document.getElementById("paymentModal");
+    const openBtn = document.getElementById("openPaymentBtn");
+
+    modal.style.display = "none";
+    if (openBtn) openBtn.setAttribute('aria-expanded', 'false');
+
+    if (lastFocusedElement) {
+        lastFocusedElement.focus();
+    }
 }
 
 function payWithPaystack() {
@@ -248,6 +284,6 @@ function payWithPaystack() {
 window.onclick = function(event) {
     const modal = document.getElementById("paymentModal");
     if (event.target == modal) {
-        modal.style.display = "none";
+        closePaymentModal();
     }
 }
