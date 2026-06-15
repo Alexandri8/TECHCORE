@@ -122,12 +122,18 @@ def admin():
 @app.route("/contact", methods=["POST"])
 def contact():
     data = request.json
+
+    # Security: Validate that input is a dictionary and fields are strings
+    if not isinstance(data, dict):
+        return jsonify({"status": "Invalid input format"}), 400
+
     name = data.get("name")
     email = data.get("email")
     message = data.get("message")
 
-    if not name or not email or not message:
-        return jsonify({"status": "Missing required fields"}), 400
+    # Security: Ensure fields are strings and not empty
+    if not all(isinstance(f, str) and f for f in [name, email, message]):
+        return jsonify({"status": "Missing or invalid required fields"}), 400
 
     # Security: Server-side length validation
     if len(name) > 100 or len(email) > 120 or len(message) > 1000:
@@ -145,8 +151,18 @@ def contact():
 # Paystack Integration
 @app.route("/initialize-payment", methods=["POST"])
 def initialize_payment():
-    email = request.json.get("email")
+    data = request.json
+
+    # Security: Validate that input is a dictionary and email is a string
+    if not isinstance(data, dict):
+        return jsonify({"status": False, "message": "Invalid input format."}), 400
+
+    email = data.get("email")
     
+    # Security: Ensure email is a string and not empty
+    if not isinstance(email, str) or not email:
+        return jsonify({"status": False, "message": "Email is required and must be a string."}), 400
+
     # Security: Hardcode amount server-side to prevent client-side manipulation
     # ₦5,000 = 500,000 Kobo
     amount = 500000
