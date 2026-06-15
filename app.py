@@ -40,13 +40,18 @@ app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'False'
 
 db.init_app(app)
 
-# Optimization: Enable WAL mode for SQLite to improve concurrency
+# Optimization: Configure SQLite for high performance using WAL mode and NORMAL synchronization.
+# This setup improves concurrency (multi-reader, single-writer) and reduces disk I/O overhead.
 with app.app_context():
     @event.listens_for(db.engine, "connect")
     def set_sqlite_pragma(dbapi_connection, connection_record):
         if app.config['SQLALCHEMY_DATABASE_URI'].startswith("sqlite"):
             cursor = dbapi_connection.cursor()
+            # journal_mode=WAL: Enables Write-Ahead Logging.
             cursor.execute("PRAGMA journal_mode=WAL")
+            # synchronous=NORMAL: Reduces fsync() frequency. In WAL mode, this is safe and
+            # significantly faster as it only syncs to disk at critical checkpoints.
+            cursor.execute("PRAGMA synchronous=NORMAL")
             cursor.close()
 
 # Login Manager Configuration
