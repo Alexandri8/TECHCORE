@@ -748,6 +748,14 @@ textarea:focus-visible {
     color: #ef4444;
 }
 
+.text-warning {
+    color: var(--accent-tertiary) !important;
+}
+
+.text-danger {
+    color: #ef4444 !important;
+}
+
 .loader {
     display: none;
     width: 20px;
