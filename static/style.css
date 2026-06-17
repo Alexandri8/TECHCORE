@@ -89,6 +89,26 @@ a {
     margin-top: 5rem;
 }
 
+.mt-xs {
+    margin-top: 0.5rem;
+}
+
+.text-sm {
+    font-size: 0.875rem;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-warning {
+    color: var(--accent-tertiary) !important;
+}
+
+.text-danger {
+    color: #ef4444 !important;
+}
+
 /* ================== Typography & Effects ================== */
 .text-gradient {
     background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
