@@ -52,10 +52,21 @@ document.addEventListener("DOMContentLoaded", () => {
     const messageInput = document.getElementById("message");
     const charCounter = document.getElementById("charCounter");
     if (messageInput && charCounter) {
-        messageInput.addEventListener("input", () => {
+        const updateCounter = () => {
             const length = messageInput.value.length;
-            charCounter.innerText = `${length} / 1000`;
-        });
+            const maxLength = messageInput.getAttribute("maxlength") || 1000;
+            charCounter.innerText = `${length} / ${maxLength}`;
+
+            // Dynamic coloring based on length
+            charCounter.classList.remove("text-warning", "text-danger");
+            if (length >= maxLength * 0.98) {
+                charCounter.classList.add("text-danger");
+            } else if (length >= maxLength * 0.9) {
+                charCounter.classList.add("text-warning");
+            }
+        };
+
+        messageInput.addEventListener("input", updateCounter);
     }
 
     // Modal Keyboard Accessibility
@@ -188,7 +199,10 @@ function sendMessage() {
             emailInput.value = '';
             messageInput.value = '';
             const charCounter = document.getElementById("charCounter");
-            if (charCounter) charCounter.innerText = "0 / 1000";
+            if (charCounter) {
+                charCounter.innerText = "0 / 1000";
+                charCounter.classList.remove("text-warning", "text-danger");
+            }
 
             // Hide message after a while
             setTimeout(() => {
@@ -281,9 +295,9 @@ function payWithPaystack() {
 }
 
 // Close modal when clicking outside
-window.onclick = function(event) {
+window.addEventListener("click", (event) => {
     const modal = document.getElementById("paymentModal");
     if (event.target == modal) {
         closePaymentModal();
     }
-}
+});
