@@ -12,3 +12,8 @@
 **Vulnerability:** Use of `'unsafe-inline'` in the `script-src` directive of the Content Security Policy (CSP) weakens the protection against Cross-Site Scripting (XSS).
 **Learning:** To remove `'unsafe-inline'`, all inline JavaScript (event handlers like `onclick`, `onsubmit`) must be refactored into external scripts using `addEventListener`.
 **Prevention:** Avoid inline JavaScript during development to maintain a strict CSP. Implement global event listeners in a centralized JS file for better maintainability and security.
+
+## 2025-06-26 - Information Leak and DoS via Malformed JSON Payloads
+**Vulnerability:** The application was vulnerable to crashes (HTTP 500) and potential information leaks when receiving malformed JSON payloads (e.g., non-dictionary objects) or unexpected data types in JSON-processing routes.
+**Learning:** Flask's `request.json` can return various types (list, null, etc.) depending on the client's input. Accessing it without type-checking leads to unhandled exceptions.
+**Prevention:** Use `request.get_json(silent=True)` and explicitly verify that the result is a dictionary (`isinstance(data, dict)`). Validate each required field's type and content before use.

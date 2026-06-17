@@ -56,5 +56,40 @@ class SecurityTestCase(unittest.TestCase):
                                     content_type='application/json')
         self.assertEqual(response.status_code, 400)
 
+    def test_robust_json_validation(self):
+        # 1. Missing JSON body
+        response = self.client.post('/contact', data="not json", content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Invalid request format", json.loads(response.data)['status'])
+
+        # 2. JSON body that is not a dictionary
+        response = self.client.post('/contact', data=json.dumps(["name", "email", "message"]), content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Invalid request format", json.loads(response.data)['status'])
+
+        # 3. Missing required fields
+        response = self.client.post('/contact', data=json.dumps({'name': 'test'}), content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Missing or invalid required fields", json.loads(response.data)['status'])
+
+        # 4. Required fields with incorrect types
+        response = self.client.post('/contact',
+                                    data=json.dumps({'name': 'test', 'email': 123, 'message': 'hello'}),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Missing or invalid required fields", json.loads(response.data)['status'])
+
+        # 5. Empty string values
+        response = self.client.post('/contact',
+                                    data=json.dumps({'name': 'test', 'email': '  ', 'message': 'hello'}),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Missing or invalid required fields", json.loads(response.data)['status'])
+
+        # Same for /initialize-payment
+        response = self.client.post('/initialize-payment', data=json.dumps({'email': 123}), content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(json.loads(response.data)['status'])
+
 if __name__ == '__main__':
     unittest.main()
