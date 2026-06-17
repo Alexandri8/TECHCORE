@@ -5,7 +5,7 @@ from flask_wtf.csrf import CSRFProtect
 import os
 import requests
 import uuid
-from sqlalchemy import event
+from sqlalchemy import event, Engine
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -40,14 +40,19 @@ app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'False'
 
 db.init_app(app)
 
-# Optimization: Enable WAL mode for SQLite to improve concurrency
-with app.app_context():
-    @event.listens_for(db.engine, "connect")
-    def set_sqlite_pragma(dbapi_connection, connection_record):
-        if app.config['SQLALCHEMY_DATABASE_URI'].startswith("sqlite"):
-            cursor = dbapi_connection.cursor()
-            cursor.execute("PRAGMA journal_mode=WAL")
-            cursor.close()
+# Optimization: Enable WAL mode and NORMAL synchronous for SQLite to improve performance.
+# This listener is registered on the Engine class to ensure it applies to all connections.
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    try:
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
+    except Exception:
+        # Silently ignore if the PRAGMA fails (e.g. on non-SQLite databases)
+        pass
+    finally:
+        cursor.close()
 
 # Login Manager Configuration
 login_manager = LoginManager()
