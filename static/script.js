@@ -55,6 +55,17 @@ document.addEventListener("DOMContentLoaded", () => {
         messageInput.addEventListener("input", () => {
             const length = messageInput.value.length;
             charCounter.innerText = `${length} / 1000`;
+
+            // Dynamic styling based on length
+            if (length >= 980) {
+                charCounter.classList.add('text-danger');
+                charCounter.classList.remove('text-warning');
+            } else if (length >= 900) {
+                charCounter.classList.add('text-warning');
+                charCounter.classList.remove('text-danger');
+            } else {
+                charCounter.classList.remove('text-warning', 'text-danger');
+            }
         });
     }
 
@@ -188,7 +199,10 @@ function sendMessage() {
             emailInput.value = '';
             messageInput.value = '';
             const charCounter = document.getElementById("charCounter");
-            if (charCounter) charCounter.innerText = "0 / 1000";
+            if (charCounter) {
+                charCounter.innerText = "0 / 1000";
+                charCounter.classList.remove('text-warning', 'text-danger');
+            }
 
             // Hide message after a while
             setTimeout(() => {

@@ -9,3 +9,7 @@
 ## 2026-06-13 - [Stateful Button Feedback and Modal Scoping]
 **Learning:** Providing immediate, stateful visual feedback on a submit button (e.g., transitioning from 'Loading' to 'Success') after an async operation significantly enhances the user's sense of task completion. Additionally, when implementing modal focus restoration, the tracking variable must be scoped correctly (top-level or shared closure) if the open/close logic is split between global functions and event listeners.
 **Action:** Use temporary success classes and icons on buttons after fetch completion and ensure focus-tracking variables are globally accessible within the script.
+
+## 2026-06-18 - [Accessible Character Counters and Visual Cues]
+**Learning:** For textareas with character limits, linking the counter via `aria-describedby` provides a less intrusive experience than `aria-live` for power users while maintaining accessibility. Furthermore, using dynamic CSS classes (e.g., `.text-warning` at 90% and `.text-danger` at 98%) provides essential visual feedback for imminent limit reach.
+**Action:** Implement `aria-describedby` for counters and use standardized color thresholds to signal remaining capacity in multi-line inputs.

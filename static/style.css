@@ -77,6 +77,26 @@ a {
     text-align: center;
 }
 
+.text-right {
+    text-align: right;
+}
+
+.text-sm {
+    font-size: 0.875rem;
+}
+
+.text-warning {
+    color: var(--accent-tertiary) !important;
+}
+
+.text-danger {
+    color: #ef4444 !important;
+}
+
+.mt-xs {
+    margin-top: 0.5rem;
+}
+
 .mt-sm {
     margin-top: 1rem;
 }
