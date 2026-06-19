@@ -26,6 +26,10 @@ PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY')
 # Security: TEST_MODE should be False by default in production
 TEST_MODE = os.getenv('TEST_MODE', 'False').lower() == 'true'
 
+# Performance: Use a global session for Paystack API to enable connection pooling
+# This reduces latency by avoiding repeated TCP/TLS handshakes
+paystack_session = requests.Session()
+
 # Database Configuration
 basedir = os.path.abspath(os.path.dirname(__file__))
 # Security: Allow DATABASE_URL from environment variable
@@ -40,13 +44,16 @@ app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'False'
 
 db.init_app(app)
 
-# Optimization: Enable WAL mode for SQLite to improve concurrency
+# Optimization: Enable WAL mode and NORMAL synchronous for SQLite to improve concurrency and performance
 with app.app_context():
     @event.listens_for(db.engine, "connect")
     def set_sqlite_pragma(dbapi_connection, connection_record):
         if app.config['SQLALCHEMY_DATABASE_URI'].startswith("sqlite"):
             cursor = dbapi_connection.cursor()
             cursor.execute("PRAGMA journal_mode=WAL")
+            # Optimization: Use NORMAL synchronous mode in WAL mode for significantly faster writes
+            # while still maintaining data integrity against application crashes.
+            cursor.execute("PRAGMA synchronous=NORMAL")
             cursor.close()
 
 # Login Manager Configuration
@@ -122,12 +129,20 @@ def admin():
 @app.route("/contact", methods=["POST"])
 def contact():
     data = request.json
+    # Security: Validate request is a dictionary to prevent DoS/500 errors
+    if not isinstance(data, dict):
+        return jsonify({"status": "Invalid request format"}), 400
+
     name = data.get("name")
     email = data.get("email")
     message = data.get("message")
 
-    if not name or not email or not message:
-        return jsonify({"status": "Missing required fields"}), 400
+    # Security: Validate types and presence of required fields
+    if not all(isinstance(f, str) for f in [name, email, message]):
+        return jsonify({"status": "Invalid field types"}), 400
+
+    if not name.strip() or not email.strip() or not message.strip():
+        return jsonify({"status": "Missing or empty required fields"}), 400
 
     # Security: Server-side length validation
     if len(name) > 100 or len(email) > 120 or len(message) > 1000:
@@ -145,7 +160,16 @@ def contact():
 # Paystack Integration
 @app.route("/initialize-payment", methods=["POST"])
 def initialize_payment():
-    email = request.json.get("email")
+    data = request.json
+    # Security: Validate request is a dictionary to prevent DoS/500 errors
+    if not isinstance(data, dict):
+        return jsonify({"status": False, "message": "Invalid request format."}), 400
+
+    email = data.get("email")
+
+    # Security: Validate types and presence of required fields
+    if not isinstance(email, str) or not email.strip():
+        return jsonify({"status": False, "message": "Valid email is required."}), 400
     
     # Security: Hardcode amount server-side to prevent client-side manipulation
     # ₦5,000 = 500,000 Kobo

@@ -54,14 +54,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (messageInput && charCounter) {
         messageInput.addEventListener("input", () => {
             const length = messageInput.value.length;
-            const maxLength = 1000;
-            charCounter.innerText = `${length} / ${maxLength}`;
+            charCounter.innerText = `${length} / 1000`;
 
-            // Visual feedback thresholds
+            // Dynamic visual feedback for character limit
             charCounter.classList.remove('text-warning', 'text-danger');
-            if (length >= maxLength * 0.98) {
+            if (length >= 980) {
                 charCounter.classList.add('text-danger');
-            } else if (length >= maxLength * 0.9) {
+            } else if (length >= 900) {
                 charCounter.classList.add('text-warning');
             }
         });

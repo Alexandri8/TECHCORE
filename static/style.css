@@ -97,6 +97,14 @@ a {
     background-clip: text;
 }
 
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-sm { font-size: 0.85rem; }
+.text-muted { color: var(--text-muted); }
+.text-warning { color: var(--accent-tertiary); }
+.text-danger { color: #ef4444; }
+.mt-xs { margin-top: 0.5rem; }
+
 .badge {
     display: inline-block;
     font-family: var(--font-mono);
@@ -754,6 +762,14 @@ textarea:focus-visible {
 
 .form-response.error {
     color: #ef4444;
+}
+
+.text-warning {
+    color: var(--accent-tertiary) !important;
+}
+
+.text-danger {
+    color: #ef4444 !important;
 }
 
 .loader {
