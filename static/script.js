@@ -56,7 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const length = messageInput.value.length;
             charCounter.innerText = `${length} / 1000`;
 
-            // Visual feedback based on length
+            // Dynamic visual feedback for character limit
             charCounter.classList.remove('text-warning', 'text-danger');
             if (length >= 980) {
                 charCounter.classList.add('text-danger');
