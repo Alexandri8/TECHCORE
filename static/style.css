@@ -286,6 +286,14 @@ a {
     box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3) !important;
 }
 
+.text-warning {
+    color: var(--accent-tertiary) !important;
+}
+
+.text-danger {
+    color: #ef4444 !important;
+}
+
 /* ================== Accessibility ================== */
 a:focus-visible,
 button:focus-visible,
