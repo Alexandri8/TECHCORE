@@ -125,12 +125,20 @@ def admin():
 @app.route("/contact", methods=["POST"])
 def contact():
     data = request.json
+    # Security: Validate request is a dictionary to prevent DoS/500 errors
+    if not isinstance(data, dict):
+        return jsonify({"status": "Invalid request format"}), 400
+
     name = data.get("name")
     email = data.get("email")
     message = data.get("message")
 
-    if not name or not email or not message:
-        return jsonify({"status": "Missing required fields"}), 400
+    # Security: Validate types and presence of required fields
+    if not all(isinstance(f, str) for f in [name, email, message]):
+        return jsonify({"status": "Invalid field types"}), 400
+
+    if not name.strip() or not email.strip() or not message.strip():
+        return jsonify({"status": "Missing or empty required fields"}), 400
 
     # Security: Server-side length validation
     if len(name) > 100 or len(email) > 120 or len(message) > 1000:
@@ -148,7 +156,16 @@ def contact():
 # Paystack Integration
 @app.route("/initialize-payment", methods=["POST"])
 def initialize_payment():
-    email = request.json.get("email")
+    data = request.json
+    # Security: Validate request is a dictionary to prevent DoS/500 errors
+    if not isinstance(data, dict):
+        return jsonify({"status": False, "message": "Invalid request format."}), 400
+
+    email = data.get("email")
+
+    # Security: Validate types and presence of required fields
+    if not isinstance(email, str) or not email.strip():
+        return jsonify({"status": False, "message": "Valid email is required."}), 400
     
     # Security: Hardcode amount server-side to prevent client-side manipulation
     # ₦5,000 = 500,000 Kobo
