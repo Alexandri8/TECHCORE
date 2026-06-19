@@ -6,6 +6,7 @@ import os
 import requests
 import uuid
 from sqlalchemy import event
+from sqlalchemy.engine import Engine
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
@@ -40,14 +41,17 @@ app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'False'
 
 db.init_app(app)
 
-# Optimization: Enable WAL mode for SQLite to improve concurrency
-with app.app_context():
-    @event.listens_for(db.engine, "connect")
-    def set_sqlite_pragma(dbapi_connection, connection_record):
-        if app.config['SQLALCHEMY_DATABASE_URI'].startswith("sqlite"):
-            cursor = dbapi_connection.cursor()
-            cursor.execute("PRAGMA journal_mode=WAL")
-            cursor.close()
+# Optimization: Register SQLite PRAGMA event listeners on the Engine class globally
+# This ensures journal_mode=WAL and synchronous=NORMAL apply to all connections.
+@event.listens_for(Engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    if app.config['SQLALCHEMY_DATABASE_URI'].startswith("sqlite"):
+        cursor = dbapi_connection.cursor()
+        # Optimization: Enable WAL mode for SQLite to improve concurrency
+        cursor.execute("PRAGMA journal_mode=WAL")
+        # Optimization: Set synchronous to NORMAL to reduce fsync() calls while remaining safe in WAL mode
+        cursor.execute("PRAGMA synchronous=NORMAL")
+        cursor.close()
 
 # Login Manager Configuration
 login_manager = LoginManager()
