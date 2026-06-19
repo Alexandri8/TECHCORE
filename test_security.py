@@ -36,5 +36,55 @@ class SecurityTestCase(unittest.TestCase):
             self.assertIsNotNone(payment)
             self.assertEqual(payment.amount, 5000.0)
 
+    def test_contact_form_length_validation(self):
+        # Test name too long
+        response = self.client.post('/contact',
+                                    data=json.dumps({'name': 'a' * 101, 'email': 'test@example.com', 'message': 'hello'}),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Input exceeds maximum allowed length", json.loads(response.data)['status'])
+
+        # Test email too long
+        response = self.client.post('/contact',
+                                    data=json.dumps({'name': 'test', 'email': 'a' * 121 + '@example.com', 'message': 'hello'}),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+
+        # Test message too long
+        response = self.client.post('/contact',
+                                    data=json.dumps({'name': 'test', 'email': 'test@example.com', 'message': 'a' * 1001}),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+
+    def test_contact_form_malformed_json(self):
+        # Test with a list instead of a dict
+        response = self.client.post('/contact',
+                                    data=json.dumps([1, 2, 3]),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Invalid request format", json.loads(response.data)['status'])
+
+        # Test with incorrect data types (integer instead of string)
+        response = self.client.post('/contact',
+                                    data=json.dumps({'name': 123, 'email': 'test@example.com', 'message': 'hello'}),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Invalid field types", json.loads(response.data)['status'])
+
+    def test_initialize_payment_malformed_json(self):
+        # Test with a list instead of a dict
+        response = self.client.post('/initialize-payment',
+                                    data=json.dumps([]),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Invalid request format", json.loads(response.data)['message'])
+
+        # Test with incorrect email type
+        response = self.client.post('/initialize-payment',
+                                    data=json.dumps({'email': 123}),
+                                    content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Valid email is required", json.loads(response.data)['message'])
+
 if __name__ == '__main__':
     unittest.main()

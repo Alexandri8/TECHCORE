@@ -1,15 +1,28 @@
 // script.js - TechCore interactions and form handling
 
+let lastFocusedElement;
+
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Navigation background change on scroll
+    // 1. Navigation background change on scroll (Optimized with IntersectionObserver)
     const navbar = document.querySelector('.navbar');
-    window.addEventListener('scroll', () => {
-        if (window.scrollY > 50) {
-            navbar.classList.add('scrolled');
-        } else {
-            navbar.classList.remove('scrolled');
-        }
-    });
+    const hero = document.querySelector('.hero');
+
+    if (navbar && hero) {
+        const navObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                // If hero is NOT intersecting the top 50px, add 'scrolled' class
+                if (!entry.isIntersecting) {
+                    navbar.classList.add('scrolled');
+                } else {
+                    navbar.classList.remove('scrolled');
+                }
+            });
+        }, {
+            rootMargin: '-50px 0px 0px 0px',
+            threshold: 0
+        });
+        navObserver.observe(hero);
+    }
 
     // 2. Intersection Observer for Scroll Animations
     const observerOptions = {
@@ -35,6 +48,34 @@ document.addEventListener("DOMContentLoaded", () => {
 
     animateElements.forEach(el => observer.observe(el));
 
+    // Character Counter for Contact Form
+    const messageInput = document.getElementById("message");
+    const charCounter = document.getElementById("charCounter");
+    if (messageInput && charCounter) {
+        messageInput.addEventListener("input", () => {
+            const length = messageInput.value.length;
+            charCounter.innerText = `${length} / 1000`;
+
+            // Dynamic visual feedback for character limit
+            charCounter.classList.remove('text-warning', 'text-danger');
+            if (length >= 980) {
+                charCounter.classList.add('text-danger');
+            } else if (length >= 900) {
+                charCounter.classList.add('text-warning');
+            }
+        });
+    }
+
+    // Modal Keyboard Accessibility
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            const modal = document.getElementById("paymentModal");
+            if (modal && (modal.style.display === "block" || modal.classList.contains('show'))) {
+                closePaymentModal();
+            }
+        }
+    });
+
     // Trigger animations for elements already in viewport on load
     setTimeout(() => {
         animateElements.forEach(el => {
@@ -45,6 +86,37 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }, 100);
 
+    // 3. Event Listeners (Removed inline JS from HTML)
+    const contactForm = document.getElementById("contactForm");
+    if (contactForm) {
+        contactForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            sendMessage();
+        });
+    }
+
+    const openPaymentBtn = document.getElementById("openPaymentBtn");
+    if (openPaymentBtn) {
+        openPaymentBtn.addEventListener("click", openPaymentModal);
+    }
+
+    const closePaymentBtn = document.getElementById("closePaymentBtn");
+    if (closePaymentBtn) {
+        closePaymentBtn.addEventListener("click", closePaymentModal);
+    }
+
+    const payBtn = document.getElementById("payBtn");
+    if (payBtn) {
+        payBtn.addEventListener("click", payWithPaystack);
+    }
+
+    // 4. Handle Server-side Payment Notifications
+    const paymentStatus = document.body.dataset.paymentStatus;
+    if (paymentStatus === 'success') {
+        showNotification("Payment Successful! We will contact you shortly.", 'success');
+    } else if (paymentStatus === 'failed') {
+        showNotification("Payment Failed. Please try again.", 'error');
+    }
 });
 
 // 4. Notification System
@@ -104,13 +176,30 @@ function sendMessage() {
         .then(data => {
             // Success
             submitBtn.classList.remove('loading');
+
+            // Visual feedback on button
+            const originalContent = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span>Message Sent</span> <i class="fas fa-check"></i>';
+            submitBtn.classList.add('btn-success');
+
             responseBox.className = 'form-response show success';
             responseBox.innerText = data.status || "Transmission successful. Acknowledged.";
+
+            // Reset button after 3 seconds
+            setTimeout(() => {
+                submitBtn.innerHTML = originalContent;
+                submitBtn.classList.remove('btn-success');
+            }, 3000);
 
             // Clear form
             nameInput.value = '';
             emailInput.value = '';
             messageInput.value = '';
+            const charCounter = document.getElementById("charCounter");
+            if (charCounter) {
+                charCounter.innerText = "0 / 1000";
+                charCounter.classList.remove('text-warning', 'text-danger');
+            }
 
             // Hide message after a while
             setTimeout(() => {
@@ -128,11 +217,27 @@ function sendMessage() {
 
 // 4. Payment Handling
 function openPaymentModal() {
-    document.getElementById("paymentModal").style.display = "block";
+    lastFocusedElement = document.activeElement;
+    const modal = document.getElementById("paymentModal");
+    const openBtn = document.getElementById("openPaymentBtn");
+
+    modal.style.display = "block";
+    if (openBtn) openBtn.setAttribute('aria-expanded', 'true');
+
+    const payEmail = document.getElementById("payEmail");
+    if (payEmail) payEmail.focus();
 }
 
 function closePaymentModal() {
-    document.getElementById("paymentModal").style.display = "none";
+    const modal = document.getElementById("paymentModal");
+    const openBtn = document.getElementById("openPaymentBtn");
+
+    modal.style.display = "none";
+    if (openBtn) openBtn.setAttribute('aria-expanded', 'false');
+
+    if (lastFocusedElement) {
+        lastFocusedElement.focus();
+    }
 }
 
 function payWithPaystack() {
@@ -190,6 +295,6 @@ function payWithPaystack() {
 window.onclick = function(event) {
     const modal = document.getElementById("paymentModal");
     if (event.target == modal) {
-        modal.style.display = "none";
+        closePaymentModal();
     }
 }

@@ -97,6 +97,14 @@ a {
     background-clip: text;
 }
 
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-sm { font-size: 0.85rem; }
+.text-muted { color: var(--text-muted); }
+.text-warning { color: var(--accent-tertiary); }
+.text-danger { color: #ef4444; }
+.mt-xs { margin-top: 0.5rem; }
+
 .badge {
     display: inline-block;
     font-family: var(--font-mono);
@@ -279,6 +287,11 @@ a {
 .btn-secondary:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.2);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3) !important;
 }
 
 /* ================== Accessibility ================== */
@@ -741,6 +754,14 @@ textarea:focus-visible {
 
 .form-response.error {
     color: #ef4444;
+}
+
+.text-warning {
+    color: var(--accent-tertiary) !important;
+}
+
+.text-danger {
+    color: #ef4444 !important;
 }
 
 .loader {

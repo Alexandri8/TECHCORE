@@ -5,10 +5,14 @@ from flask_wtf.csrf import CSRFProtect
 import os
 import requests
 import uuid
+from sqlalchemy import event
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Optimization: Global session for connection pooling
+paystack_session = requests.Session()
 
 app = Flask(__name__)
 # Security: Use environment variable for secret key, fallback to random key
@@ -31,8 +35,26 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 # Security: Allow DATABASE_URL from environment variable
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///' + os.path.join(basedir, 'instance', 'database.db'))
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# Security: Limit request size to 1MB
+app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
+# Security: Harden session cookies
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'False').lower() == 'true'
 
 db.init_app(app)
+
+# Optimization: Enable WAL mode and NORMAL synchronous for SQLite to improve concurrency and performance
+with app.app_context():
+    @event.listens_for(db.engine, "connect")
+    def set_sqlite_pragma(dbapi_connection, connection_record):
+        if app.config['SQLALCHEMY_DATABASE_URI'].startswith("sqlite"):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL")
+            # Optimization: Use NORMAL synchronous mode in WAL mode for significantly faster writes
+            # while still maintaining data integrity against application crashes.
+            cursor.execute("PRAGMA synchronous=NORMAL")
+            cursor.close()
 
 # Login Manager Configuration
 login_manager = LoginManager()
@@ -107,12 +129,24 @@ def admin():
 @app.route("/contact", methods=["POST"])
 def contact():
     data = request.json
+    # Security: Validate request is a dictionary to prevent DoS/500 errors
+    if not isinstance(data, dict):
+        return jsonify({"status": "Invalid request format"}), 400
+
     name = data.get("name")
     email = data.get("email")
     message = data.get("message")
 
-    if not name or not email or not message:
-        return jsonify({"status": "Missing required fields"}), 400
+    # Security: Validate types and presence of required fields
+    if not all(isinstance(f, str) for f in [name, email, message]):
+        return jsonify({"status": "Invalid field types"}), 400
+
+    if not name.strip() or not email.strip() or not message.strip():
+        return jsonify({"status": "Missing or empty required fields"}), 400
+
+    # Security: Server-side length validation
+    if len(name) > 100 or len(email) > 120 or len(message) > 1000:
+        return jsonify({"status": "Input exceeds maximum allowed length"}), 400
 
     try:
         new_message = ContactMessage(name=name, email=email, message=message)
@@ -126,7 +160,16 @@ def contact():
 # Paystack Integration
 @app.route("/initialize-payment", methods=["POST"])
 def initialize_payment():
-    email = request.json.get("email")
+    data = request.json
+    # Security: Validate request is a dictionary to prevent DoS/500 errors
+    if not isinstance(data, dict):
+        return jsonify({"status": False, "message": "Invalid request format."}), 400
+
+    email = data.get("email")
+
+    # Security: Validate types and presence of required fields
+    if not isinstance(email, str) or not email.strip():
+        return jsonify({"status": False, "message": "Valid email is required."}), 400
     
     # Security: Hardcode amount server-side to prevent client-side manipulation
     # ₦5,000 = 500,000 Kobo
@@ -170,7 +213,9 @@ def initialize_payment():
     }
     
     try:
-        # Performance: Added timeout to prevent worker exhaustion
+        # Optimization: Use global session for connection pooling
+        # Security: Add timeout to prevent worker exhaustion
+        # Optimization: Use global session for connection pooling and added timeout to prevent hanging
         response = paystack_session.post("https://api.paystack.co/transaction/initialize", json=payload, headers=headers, timeout=10)
         res_data = response.json()
         
@@ -188,10 +233,18 @@ def initialize_payment():
 @app.route("/verify-payment")
 def verify_payment():
     reference = request.args.get("reference")
+    # Optimization: Early return if reference is missing
     if not reference:
         return redirect(url_for('home'))
         
     payment = Payment.query.filter_by(reference=reference).first()
+
+    # Optimization: Early return if payment not found or already successful
+    if not payment:
+        return redirect(url_for('home'))
+
+    if payment.status == "success":
+        return render_template("index.html", payment_status="success")
 
     if TEST_MODE:
         if payment:
@@ -207,7 +260,9 @@ def verify_payment():
     }
     
     try:
-        # Performance: Added timeout to prevent worker exhaustion
+        # Optimization: Use global session for connection pooling
+        # Security: Add timeout to prevent worker exhaustion
+        # Optimization: Use global session for connection pooling and added timeout to prevent hanging
         response = paystack_session.get(f"https://api.paystack.co/transaction/verify/{reference}", headers=headers, timeout=10)
         res_data = response.json()
         
@@ -230,15 +285,22 @@ def add_security_headers(response):
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    # Security: HSTS (Strict-Transport-Security)
+    response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+
     # Content Security Policy: default-src 'self' allows only our own domain
-    # script-src 'self' 'unsafe-inline' allows our scripts (unsafe-inline is used in some templates)
     # style-src and font-src allow external resources from trusted domains (Google Fonts, Font Awesome)
+    # frame-ancestors 'none' prevents the site from being embedded in iframes
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline'; "
+        "script-src 'self'; "
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; "
         "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; "
-        "img-src 'self' data:;"
+        "img-src 'self' data:; "
+        "frame-ancestors 'none'; "
+        "object-src 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self';"
     )
     return response
 
