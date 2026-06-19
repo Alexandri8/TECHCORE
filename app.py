@@ -26,6 +26,10 @@ PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY')
 # Security: TEST_MODE should be False by default in production
 TEST_MODE = os.getenv('TEST_MODE', 'False').lower() == 'true'
 
+# Performance: Use a global session for Paystack API to enable connection pooling
+# This reduces latency by avoiding repeated TCP/TLS handshakes
+paystack_session = requests.Session()
+
 # Database Configuration
 basedir = os.path.abspath(os.path.dirname(__file__))
 # Security: Allow DATABASE_URL from environment variable
