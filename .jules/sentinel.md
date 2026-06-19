@@ -12,3 +12,8 @@
 **Vulnerability:** Use of `'unsafe-inline'` in the `script-src` directive of the Content Security Policy (CSP) weakens the protection against Cross-Site Scripting (XSS).
 **Learning:** To remove `'unsafe-inline'`, all inline JavaScript (event handlers like `onclick`, `onsubmit`) must be refactored into external scripts using `addEventListener`.
 **Prevention:** Avoid inline JavaScript during development to maintain a strict CSP. Implement global event listeners in a centralized JS file for better maintainability and security.
+
+## 2026-06-19 - Lack of Robust JSON Payload Validation
+**Vulnerability:** The application was vulnerable to crashes (500 Internal Server Error) and potential information leakage when receiving malformed JSON, non-dictionary payloads, or incorrect data types in API endpoints.
+**Learning:** Flask's `request.json` or `request.get_json()` can return `None` or non-dict types (like lists) depending on the input, leading to `AttributeError` when attempting to use `.get()`. Additionally, missing type checks on individual fields can cause `TypeError` during operations like `len()`.
+**Prevention:** Always use `request.get_json(silent=True)`, verify that the result is an `isinstance(data, dict)`, and strictly validate the existence and types (e.g., `isinstance(f, str)`) of all required fields before processing.

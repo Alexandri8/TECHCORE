@@ -121,10 +121,18 @@ def admin():
 
 @app.route("/contact", methods=["POST"])
 def contact():
-    data = request.json
+    # Security: Robust JSON validation to prevent 500 Internal Server Errors from malformed input
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"status": "Invalid JSON payload"}), 400
+
     name = data.get("name")
     email = data.get("email")
     message = data.get("message")
+
+    # Security: Strict type checking and presence validation
+    if not all(isinstance(f, str) for f in [name, email, message]):
+        return jsonify({"status": "Invalid data types"}), 400
 
     if not name or not email or not message:
         return jsonify({"status": "Missing required fields"}), 400
@@ -145,8 +153,17 @@ def contact():
 # Paystack Integration
 @app.route("/initialize-payment", methods=["POST"])
 def initialize_payment():
-    email = request.json.get("email")
+    # Security: Robust JSON validation to prevent 500 Internal Server Errors from malformed input
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify({"status": False, "message": "Invalid JSON payload"}), 400
+
+    email = data.get("email")
     
+    # Security: Strict type checking
+    if not isinstance(email, str):
+        return jsonify({"status": False, "message": "Invalid data type for email"}), 400
+
     # Security: Hardcode amount server-side to prevent client-side manipulation
     # ₦5,000 = 500,000 Kobo
     amount = 500000
