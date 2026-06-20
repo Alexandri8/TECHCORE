@@ -17,3 +17,8 @@
 **Vulnerability:** API endpoints expecting JSON were vulnerable to unhandled exceptions (500 Internal Server Error) when receiving malformed payloads (e.g., a JSON list instead of a dictionary) or incorrect data types for fields.
 **Learning:** Flask's `request.json` can return various Python types depending on the `Content-Type: application/json` payload. Accessing dictionary methods like `.get()` on a list causes an `AttributeError`.
 **Prevention:** Always verify that `request.json` is a dictionary using `isinstance(data, dict)` and validate that required fields are of the expected type (e.g., `isinstance(val, str)`) before processing.
+
+## 2026-06-30 - Missing Server-Side Input Length Validation
+**Vulnerability:** Multiple endpoints (login, payment initialization) accepted arbitrarily long input strings for fields like username, password, and email. This could lead to Denial of Service (DoS) through resource exhaustion (e.g., bcrypt processing a massive password string).
+**Learning:** Frontend validation (like HTML 'maxlength') is easily bypassed. The backend must independently enforce strict length limits on all user-provided data.
+**Prevention:** Implement server-side length checks immediately after receiving request data, returning a 400 Bad Request if limits are exceeded. Use conservative limits based on the expected data format.
