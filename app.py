@@ -5,13 +5,15 @@ from flask_wtf.csrf import CSRFProtect
 import os
 import requests
 import uuid
+import gzip
+import io
 from sqlalchemy import event
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 
-# Optimization: Global session for connection pooling
+# Performance: Use a global session for Paystack API to enable connection pooling
 paystack_session = requests.Session()
 
 app = Flask(__name__)
@@ -25,10 +27,6 @@ csrf = CSRFProtect(app)
 PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY')
 # Security: TEST_MODE should be False by default in production
 TEST_MODE = os.getenv('TEST_MODE', 'False').lower() == 'true'
-
-# Performance: Use a global session for Paystack API to enable connection pooling
-# This reduces latency by avoiding repeated TCP/TLS handshakes
-paystack_session = requests.Session()
 
 # Database Configuration
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -280,17 +278,47 @@ def verify_payment():
     return render_template("index.html", payment_status="failed")
 
 @app.after_request
-def add_security_headers(response):
-    """Add security headers to every response."""
+def apply_optimizations_and_security(response):
+    """Apply performance optimizations (Gzip compression) and security headers."""
+    # Performance Optimization: Gzip Compression
+    # This reduces payload size by ~70% for text-based assets
+    accept_encoding = request.headers.get('Accept-Encoding', '')
+    if 'gzip' in accept_encoding.lower() and \
+       200 <= response.status_code < 300 and \
+       'Content-Encoding' not in response.headers and \
+       not response.direct_passthrough:
+
+        content_type = response.headers.get('Content-Type', '').lower()
+        if any(t in content_type for t in ['text', 'javascript', 'json', 'xml', 'css']):
+            try:
+                # Optimized: Capture response data once to avoid redundant calls
+                response_data = response.get_data()
+
+                # Use standard gzip module to compress response data
+                buffer = io.BytesIO()
+                with gzip.GzipFile(mode='wb', fileobj=buffer) as f:
+                    f.write(response_data)
+
+                compressed_data = buffer.getvalue()
+
+                # Only use compression if it actually reduces size
+                if len(compressed_data) < len(response_data):
+                    response.set_data(compressed_data)
+                    response.headers['Content-Encoding'] = 'gzip'
+                    response.headers['Content-Length'] = len(compressed_data)
+                    # Ensure proxies cache different versions based on encoding
+                    response.headers['Vary'] = 'Accept-Encoding'
+            except Exception as e:
+                app.logger.error(f"Gzip compression failed: {e}")
+
+    # Security Headers
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     # Security: HSTS (Strict-Transport-Security)
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
 
-    # Content Security Policy: default-src 'self' allows only our own domain
-    # style-src and font-src allow external resources from trusted domains (Google Fonts, Font Awesome)
-    # frame-ancestors 'none' prevents the site from being embedded in iframes
+    # Content Security Policy
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
         "script-src 'self'; "
