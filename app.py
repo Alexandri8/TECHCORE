@@ -5,6 +5,7 @@ from flask_wtf.csrf import CSRFProtect
 import os
 import requests
 import uuid
+import time
 from sqlalchemy import event
 from dotenv import load_dotenv
 
@@ -94,12 +95,21 @@ def login():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+
+        # Security: Input validation and length limits to prevent DoS
+        if not username or not password:
+            return "Missing username or password", 400
+        if len(username) > 80 or len(password) > 256:
+            return "Input exceeds maximum allowed length", 400
+
         user = User.query.filter_by(username=username).first()
         
         if user and user.check_password(password):
             login_user(user)
             return redirect(url_for('admin'))
         else:
+            # Security: Delay to mitigate brute-force attacks
+            time.sleep(1)
             flash("Invalid username or password")
             
     return render_template("login.html")
@@ -178,6 +188,10 @@ def initialize_payment():
     if not email:
         return jsonify({"status": False, "message": "Email is required."}), 400
 
+    # Security: Server-side length validation
+    if len(email) > 120:
+        return jsonify({"status": False, "message": "Email exceeds maximum allowed length."}), 400
+
     # Generate unique reference
     reference = str(uuid.uuid4())
     
@@ -236,6 +250,10 @@ def verify_payment():
     # Optimization: Early return if reference is missing
     if not reference:
         return redirect(url_for('home'))
+
+    # Security: Server-side length validation
+    if len(reference) > 100:
+        return "Invalid reference", 400
         
     payment = Payment.query.filter_by(reference=reference).first()
 
