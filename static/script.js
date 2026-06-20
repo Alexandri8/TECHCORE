@@ -100,6 +100,27 @@ document.addEventListener("DOMContentLoaded", () => {
         openPaymentBtn.addEventListener("click", openPaymentModal);
     }
 
+    // Mobile Menu Toggle
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    const navLinks = document.querySelector('.nav-links');
+
+    if (mobileMenuBtn && navLinks) {
+        const toggleMenu = (forceClose = false) => {
+            const isActive = forceClose ? false : navLinks.classList.toggle('active');
+            if (forceClose) navLinks.classList.remove('active');
+            mobileMenuBtn.classList.toggle('active', isActive);
+            mobileMenuBtn.setAttribute('aria-expanded', isActive);
+            const icon = mobileMenuBtn.querySelector('i');
+            if (icon) icon.classList.toggle('fa-xmark', isActive), icon.classList.toggle('fa-bars', !isActive);
+        };
+
+        mobileMenuBtn.addEventListener('click', () => toggleMenu());
+        navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', () => toggleMenu(true)));
+        document.addEventListener('click', (e) => {
+            if (!mobileMenuBtn.contains(e.target) && !navLinks.contains(e.target) && navLinks.classList.contains('active')) toggleMenu(true);
+        });
+    }
+
     const closePaymentBtn = document.getElementById("closePaymentBtn");
     if (closePaymentBtn) {
         closePaymentBtn.addEventListener("click", closePaymentModal);
