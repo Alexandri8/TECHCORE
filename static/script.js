@@ -110,7 +110,58 @@ document.addEventListener("DOMContentLoaded", () => {
         payBtn.addEventListener("click", payWithPaystack);
     }
 
-    // 4. Handle Server-side Payment Notifications
+    // 4. Mobile Menu Logic
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    const navLinks = document.querySelector('.nav-links');
+    const menuLinks = document.querySelectorAll('.nav-links a');
+
+    function toggleMobileMenu() {
+        const isOpen = navLinks.classList.toggle('active');
+        mobileMenuBtn.setAttribute('aria-expanded', isOpen);
+        // Change icon based on state
+        const icon = mobileMenuBtn.querySelector('i');
+        if (isOpen) {
+            icon.classList.remove('fa-bars');
+            icon.classList.add('fa-times');
+        } else {
+            icon.classList.remove('fa-times');
+            icon.classList.add('fa-bars');
+        }
+    }
+
+    if (mobileMenuBtn && navLinks) {
+        mobileMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleMobileMenu();
+        });
+
+        // Close when clicking a link
+        menuLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (navLinks.classList.contains('active')) {
+                    toggleMobileMenu();
+                }
+            });
+        });
+    }
+
+    // 5. Global Click Listener for UI state management (Modal and Menu)
+    document.addEventListener('click', (event) => {
+        const modal = document.getElementById("paymentModal");
+        const modalContent = document.querySelector(".modal-content");
+
+        // Handle Modal Close on Backdrop Click
+        if (modal && modal.style.display === "block" && !modalContent.contains(event.target) && event.target === modal) {
+            closePaymentModal();
+        }
+
+        // Handle Mobile Menu Close on Outside Click
+        if (navLinks && navLinks.classList.contains('active') && !navLinks.contains(event.target) && !mobileMenuBtn.contains(event.target)) {
+            toggleMobileMenu();
+        }
+    });
+
+    // 6. Handle Server-side Payment Notifications
     const paymentStatus = document.body.dataset.paymentStatus;
     if (paymentStatus === 'success') {
         showNotification("Payment Successful! We will contact you shortly.", 'success');
@@ -291,10 +342,3 @@ function payWithPaystack() {
     });
 }
 
-// Close modal when clicking outside
-window.onclick = function(event) {
-    const modal = document.getElementById("paymentModal");
-    if (event.target == modal) {
-        closePaymentModal();
-    }
-}

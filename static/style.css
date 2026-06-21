@@ -912,12 +912,36 @@ textarea:focus-visible {
 
 @media (max-width: 768px) {
     .nav-links {
-        display: none;
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 100%;
+        height: 100vh;
+        background: rgba(10, 15, 28, 0.95);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 2.5rem;
+        transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 999;
     }
 
-    /* Mobile menu logic via JS if needed, hiding for now */
+    .nav-links.active {
+        right: 0;
+    }
+
+    .nav-links a {
+        font-size: 1.5rem !important;
+        font-weight: 600;
+    }
+
     .mobile-menu-btn {
         display: block;
+        position: relative;
+        z-index: 1001;
     }
 
     .stats-row {
