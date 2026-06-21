@@ -5,14 +5,13 @@ from flask_wtf.csrf import CSRFProtect
 import os
 import requests
 import uuid
+import gzip
+import io
 from sqlalchemy import event
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
-
-# Optimization: Global session for connection pooling
-paystack_session = requests.Session()
 
 app = Flask(__name__)
 # Security: Use environment variable for secret key, fallback to random key
@@ -32,8 +31,17 @@ paystack_session = requests.Session()
 
 # Database Configuration
 basedir = os.path.abspath(os.path.dirname(__file__))
+instance_path = os.path.join(basedir, 'instance')
+
+# Ensure instance directory exists before database initialization
+if not os.path.exists(instance_path):
+    os.makedirs(instance_path)
+
 # Security: Allow DATABASE_URL from environment variable
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///' + os.path.join(basedir, 'instance', 'database.db'))
+db_url = os.getenv('DATABASE_URL')
+if not db_url:
+    db_url = 'sqlite:///' + os.path.join(instance_path, 'database.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Security: Limit request size to 1MB
 app.config['MAX_CONTENT_LENGTH'] = 1 * 1024 * 1024
@@ -67,8 +75,6 @@ def load_user(user_id):
 
 # Create database tables and default admin securely
 with app.app_context():
-    if not os.path.exists(os.path.join(basedir, 'instance')):
-        os.makedirs(os.path.join(basedir, 'instance'))
     db.create_all()
     
     # Securely create admin user using environment variables
@@ -280,8 +286,10 @@ def verify_payment():
     return render_template("index.html", payment_status="failed")
 
 @app.after_request
-def add_security_headers(response):
-    """Add security headers to every response."""
+def after_request_handler(response):
+    """Consolidated handler for security headers and Gzip compression."""
+
+    # 1. Add Security Headers
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
@@ -302,6 +310,38 @@ def add_security_headers(response):
         "base-uri 'self'; "
         "form-action 'self';"
     )
+
+    # 2. Apply Gzip Compression (Performance Optimization)
+    # Only compress if:
+    # - Client supports it
+    # - Response is text-based (html, css, js, json)
+    # - Response is not already encoded
+    # - Response is of a reasonable size to justify overhead
+    # - Status code is 200 (Success)
+
+    accept_encoding = request.headers.get('Accept-Encoding', '').lower()
+
+    if (response.status_code == 200 and
+        'gzip' in accept_encoding and
+        not response.direct_passthrough and
+        not response.headers.get('Content-Encoding') and
+        response.mimetype in ['text/html', 'text/css', 'application/javascript', 'text/javascript', 'application/json']):
+
+        # Capture data once to avoid redundant calls
+        response_data = response.get_data()
+
+        # Only compress if > 500 bytes to avoid overhead for tiny responses
+        if len(response_data) > 500:
+            gzip_buffer = io.BytesIO()
+            with gzip.GzipFile(mode='wb', fileobj=gzip_buffer) as f:
+                f.write(response_data)
+
+            response.set_data(gzip_buffer.getvalue())
+            response.headers['Content-Encoding'] = 'gzip'
+            response.headers['Content-Length'] = len(response.get_data())
+            # Vary header is critical for proper proxy caching
+            response.headers['Vary'] = 'Accept-Encoding'
+
     return response
 
 if __name__ == "__main__":
