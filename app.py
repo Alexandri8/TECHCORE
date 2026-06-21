@@ -5,6 +5,8 @@ from flask_wtf.csrf import CSRFProtect
 import os
 import requests
 import uuid
+import time
+import re
 from sqlalchemy import event
 from dotenv import load_dotenv
 
@@ -45,16 +47,18 @@ app.config['SESSION_COOKIE_SECURE'] = os.getenv('SESSION_COOKIE_SECURE', 'False'
 db.init_app(app)
 
 # Optimization: Enable WAL mode and NORMAL synchronous for SQLite to improve concurrency and performance
-with app.app_context():
-    @event.listens_for(db.engine, "connect")
-    def set_sqlite_pragma(dbapi_connection, connection_record):
-        if app.config['SQLALCHEMY_DATABASE_URI'].startswith("sqlite"):
-            cursor = dbapi_connection.cursor()
-            cursor.execute("PRAGMA journal_mode=WAL")
-            # Optimization: Use NORMAL synchronous mode in WAL mode for significantly faster writes
-            # while still maintaining data integrity against application crashes.
-            cursor.execute("PRAGMA synchronous=NORMAL")
-            cursor.close()
+# Only run if not in testing mode to avoid issues with in-memory databases
+if not (app.config.get('TESTING') or os.getenv('TESTING') == 'true'):
+    with app.app_context():
+        @event.listens_for(db.engine, "connect")
+        def set_sqlite_pragma(dbapi_connection, connection_record):
+            if app.config['SQLALCHEMY_DATABASE_URI'].startswith("sqlite"):
+                cursor = dbapi_connection.cursor()
+                cursor.execute("PRAGMA journal_mode=WAL")
+                # Optimization: Use NORMAL synchronous mode in WAL mode for significantly faster writes
+                # while still maintaining data integrity against application crashes.
+                cursor.execute("PRAGMA synchronous=NORMAL")
+                cursor.close()
 
 # Login Manager Configuration
 login_manager = LoginManager()
@@ -66,21 +70,23 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 # Create database tables and default admin securely
-with app.app_context():
-    if not os.path.exists(os.path.join(basedir, 'instance')):
-        os.makedirs(os.path.join(basedir, 'instance'))
-    db.create_all()
-    
-    # Securely create admin user using environment variables
-    admin_username = os.getenv('ADMIN_USERNAME', 'admin')
-    admin_password = os.getenv('ADMIN_PASSWORD')
-    
-    if admin_password and not User.query.filter_by(username=admin_username).first():
-        admin = User(username=admin_username)
-        admin.set_password(admin_password)
-        db.session.add(admin)
-        db.session.commit()
-        print(f"Admin user '{admin_username}' created successfully.")
+# Only run if not in testing mode to avoid issues with in-memory databases
+if not (app.config.get('TESTING') or os.getenv('TESTING') == 'true'):
+    with app.app_context():
+        if not os.path.exists(os.path.join(basedir, 'instance')):
+            os.makedirs(os.path.join(basedir, 'instance'))
+        db.create_all()
+
+        # Securely create admin user using environment variables
+        admin_username = os.getenv('ADMIN_USERNAME', 'admin')
+        admin_password = os.getenv('ADMIN_PASSWORD')
+
+        if admin_password and not User.query.filter_by(username=admin_username).first():
+            admin = User(username=admin_username)
+            admin.set_password(admin_password)
+            db.session.add(admin)
+            db.session.commit()
+            print(f"Admin user '{admin_username}' created successfully.")
 
 @app.route("/")
 def home():
@@ -94,12 +100,21 @@ def login():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+
+        # Security: Input length validation to prevent DoS during hashing
+        if not username or not password or len(username) > 80 or len(password) > 256:
+            flash("Invalid username or password")
+            return render_template("login.html")
+
         user = User.query.filter_by(username=username).first()
         
         if user and user.check_password(password):
             login_user(user)
             return redirect(url_for('admin'))
         else:
+            # Security: Sanitize username for logging to prevent log injection
+            safe_username = re.sub(r'[^a-zA-Z0-9_@-]', '', username)[:80]
+            app.logger.warning(f"Failed login attempt for username: {safe_username}")
             flash("Invalid username or password")
             
     return render_template("login.html")

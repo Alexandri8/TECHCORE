@@ -1,3 +1,5 @@
+import os
+os.environ['TESTING'] = 'true'
 import unittest
 from app import app, db
 from models import Payment
@@ -85,6 +87,20 @@ class SecurityTestCase(unittest.TestCase):
                                     content_type='application/json')
         self.assertEqual(response.status_code, 400)
         self.assertIn("Valid email is required", json.loads(response.data)['message'])
+
+    def test_login_hardening(self):
+        """Test login route hardening (length limits)"""
+        # Test username too long
+        response = self.client.post('/login', data={'username': 'a' * 81, 'password': 'password'})
+        self.assertEqual(response.status_code, 200) # Re-renders login.html
+
+        # Test password too long
+        response = self.client.post('/login', data={'username': 'admin', 'password': 'a' * 257})
+        self.assertEqual(response.status_code, 200)
+
+        # Test failed login
+        response = self.client.post('/login', data={'username': 'wronguser', 'password': 'wrongpassword'})
+        self.assertEqual(response.status_code, 200)
 
 if __name__ == '__main__':
     unittest.main()
