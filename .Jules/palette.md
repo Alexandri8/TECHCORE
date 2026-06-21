@@ -13,3 +13,7 @@
 ## 2026-06-15 - [Enhanced Character Counter Feedback and Accessibility]
 **Learning:** For textareas with character limits, linking the counter via `aria-describedby` provides a non-intrusive way for screen reader users to discover the limit. Furthermore, providing multi-stage visual feedback (e.g., warning at 90%, danger at 98%) helps users anticipate the limit without needing to constantly check the number.
 **Action:** Always link character counters to their inputs via ARIA and implement progressive visual cues for inputs with length constraints.
+
+## 2026-06-16 - [Accessible Mobile Navigation Overlay]
+**Learning:** For mobile navigation menus, using a fixed overlay with a glassmorphic background (`backdrop-filter: blur`) provides a premium feel while maintaining context. Managing visibility via `aria-expanded` and a global click listener that handles both "outside clicks" and link clicks ensures a robust and accessible experience. Refactoring global `window.onclick` to `document.addEventListener('click')` prevents handler overwrites and allows for scalable UI state management.
+**Action:** Implement mobile menus using fixed overlays with comprehensive ARIA support and unified global event listeners for state management.
