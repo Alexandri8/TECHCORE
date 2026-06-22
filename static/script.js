@@ -48,6 +48,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
     animateElements.forEach(el => observer.observe(el));
 
+    // Mobile Menu Toggle logic
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    const navLinks = document.querySelector('.nav-links');
+    const menuIcon = mobileMenuBtn ? mobileMenuBtn.querySelector('i') : null;
+
+    if (mobileMenuBtn && navLinks) {
+        mobileMenuBtn.addEventListener('click', () => {
+            const isExpanded = mobileMenuBtn.getAttribute('aria-expanded') === 'true';
+
+            // Toggle classes
+            navLinks.classList.toggle('active');
+            document.body.classList.toggle('no-scroll');
+
+            // Update ARIA
+            mobileMenuBtn.setAttribute('aria-expanded', !isExpanded);
+
+            // Update icon
+            if (menuIcon) {
+                menuIcon.className = !isExpanded ? 'fas fa-times' : 'fas fa-bars';
+            }
+        });
+
+        // Close menu when a link is clicked
+        const navItems = navLinks.querySelectorAll('a');
+        navItems.forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('active');
+                document.body.classList.remove('no-scroll');
+                mobileMenuBtn.setAttribute('aria-expanded', 'false');
+                if (menuIcon) menuIcon.className = 'fas fa-bars';
+            });
+        });
+    }
+
     // Character Counter for Contact Form
     const messageInput = document.getElementById("message");
     const charCounter = document.getElementById("charCounter");

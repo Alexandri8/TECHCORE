@@ -13,3 +13,7 @@
 ## 2026-06-15 - [Enhanced Character Counter Feedback and Accessibility]
 **Learning:** For textareas with character limits, linking the counter via `aria-describedby` provides a non-intrusive way for screen reader users to discover the limit. Furthermore, providing multi-stage visual feedback (e.g., warning at 90%, danger at 98%) helps users anticipate the limit without needing to constantly check the number.
 **Action:** Always link character counters to their inputs via ARIA and implement progressive visual cues for inputs with length constraints.
+
+## 2026-06-16 - [Functional Mobile Navigation Menu and Scroll Locking]
+**Learning:** Mobile navigation menus should utilize a fixed overlay with premium glassmorphic styles (`backdrop-filter: blur`), manage visibility via `aria-expanded` attributes, and automatically close when a navigation link is clicked. Additionally, locking the body scroll (`overflow: hidden`) while the menu is open is crucial for a polished mobile experience.
+**Action:** Always implement scroll locking and auto-close behavior for mobile overlays to ensure intuitive interaction.
