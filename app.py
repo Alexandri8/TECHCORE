@@ -5,6 +5,8 @@ from flask_wtf.csrf import CSRFProtect
 import os
 import requests
 import uuid
+import gzip
+import io
 from sqlalchemy import event
 from dotenv import load_dotenv
 
@@ -280,8 +282,8 @@ def verify_payment():
     return render_template("index.html", payment_status="failed")
 
 @app.after_request
-def add_security_headers(response):
-    """Add security headers to every response."""
+def add_security_and_compression_headers(response):
+    """Add security headers and Gzip compression to every response."""
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
@@ -289,8 +291,6 @@ def add_security_headers(response):
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
 
     # Content Security Policy: default-src 'self' allows only our own domain
-    # style-src and font-src allow external resources from trusted domains (Google Fonts, Font Awesome)
-    # frame-ancestors 'none' prevents the site from being embedded in iframes
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
         "script-src 'self'; "
@@ -302,6 +302,43 @@ def add_security_headers(response):
         "base-uri 'self'; "
         "form-action 'self';"
     )
+
+    # Optimization: Dynamic Gzip compression for text-based responses
+    # This reduces payload size by up to 70-80% for HTML, CSS, and JS
+    accept_encoding = request.headers.get('Accept-Encoding', '').lower()
+
+    if (response.status_code < 200 or
+        response.status_code >= 300 or
+        response.direct_passthrough or
+        'gzip' not in accept_encoding or
+        'Content-Encoding' in response.headers):
+        return response
+
+    content_type = response.mimetype
+    if content_type not in ['text/html', 'text/css', 'application/javascript', 'text/javascript', 'application/json']:
+        return response
+
+    # Capture data once to avoid redundant calls and handle potential streams safely
+    content = response.get_data()
+    if len(content) < 500: # Don't compress very small responses as it might increase size
+        return response
+
+    gzip_buffer = io.BytesIO()
+    with gzip.GzipFile(mode='wb', fileobj=gzip_buffer) as gzip_file:
+        gzip_file.write(content)
+
+    response.set_data(gzip_buffer.getvalue())
+    response.headers['Content-Encoding'] = 'gzip'
+    response.headers['Content-Length'] = len(response.get_data())
+
+    # Ensure proxies know that the content varies based on Accept-Encoding
+    vary = response.headers.get('Vary')
+    if vary:
+        if 'Accept-Encoding' not in vary:
+            response.headers['Vary'] = vary + ', Accept-Encoding'
+    else:
+        response.headers['Vary'] = 'Accept-Encoding'
+
     return response
 
 if __name__ == "__main__":
