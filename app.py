@@ -5,6 +5,8 @@ from flask_wtf.csrf import CSRFProtect
 import os
 import requests
 import uuid
+import gzip
+import io
 from sqlalchemy import event
 from dotenv import load_dotenv
 
@@ -280,8 +282,9 @@ def verify_payment():
     return render_template("index.html", payment_status="failed")
 
 @app.after_request
-def add_security_headers(response):
-    """Add security headers to every response."""
+def handle_response_enhancements(response):
+    """Add security headers and dynamic Gzip compression."""
+    # Security Headers
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
@@ -289,8 +292,6 @@ def add_security_headers(response):
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
 
     # Content Security Policy: default-src 'self' allows only our own domain
-    # style-src and font-src allow external resources from trusted domains (Google Fonts, Font Awesome)
-    # frame-ancestors 'none' prevents the site from being embedded in iframes
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
         "script-src 'self'; "
@@ -302,6 +303,40 @@ def add_security_headers(response):
         "base-uri 'self'; "
         "form-action 'self';"
     )
+
+    # Optimization: Dynamic Gzip compression for text-based responses
+    # This significantly reduces payload size for HTML, CSS, JS, and JSON
+    compressible_mimetypes = [
+        'text/html', 'text/css', 'application/javascript',
+        'application/json', 'text/javascript'
+    ]
+
+    if response.mimetype in compressible_mimetypes:
+        # Ensure caches differentiate between compressed and uncompressed versions
+        # This should be set if the response COULD be compressed based on Accept-Encoding
+        response.vary.add('Accept-Encoding')
+
+        accept_encoding = request.headers.get('Accept-Encoding', '').lower()
+
+        if (
+            'gzip' in accept_encoding and
+            response.status_code == 200 and
+            not response.direct_passthrough and
+            'Content-Encoding' not in response.headers
+        ):
+            # Get data once to avoid repeated calls
+            content = response.get_data()
+
+            # Only compress if response is worth compressing (> 500 bytes)
+            if len(content) > 500:
+                gzip_buffer = io.BytesIO()
+                with gzip.GzipFile(mode='wb', fileobj=gzip_buffer) as gzip_file:
+                    gzip_file.write(content)
+
+                # set_data automatically updates Content-Length
+                response.set_data(gzip_buffer.getvalue())
+                response.headers['Content-Encoding'] = 'gzip'
+
     return response
 
 if __name__ == "__main__":
