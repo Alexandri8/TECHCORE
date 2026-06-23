@@ -94,6 +94,18 @@ def login():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+
+        # Security: Validate types and presence of required fields
+        if not isinstance(username, str) or not isinstance(password, str):
+            flash("Invalid input format")
+            return render_template("login.html"), 400
+
+        # Security: Server-side length validation to prevent resource exhaustion
+        # username limit matches User model (80)
+        if len(username) > 80 or len(password) > 256:
+            flash("Input too long")
+            return render_template("login.html"), 400
+
         user = User.query.filter_by(username=username).first()
         
         if user and user.check_password(password):
@@ -170,6 +182,10 @@ def initialize_payment():
     # Security: Validate types and presence of required fields
     if not isinstance(email, str) or not email.strip():
         return jsonify({"status": False, "message": "Valid email is required."}), 400
+
+    # Security: Server-side length validation to match Payment model
+    if len(email) > 120:
+        return jsonify({"status": False, "message": "Email exceeds maximum length."}), 400
     
     # Security: Hardcode amount server-side to prevent client-side manipulation
     # ₦5,000 = 500,000 Kobo
@@ -287,6 +303,14 @@ def add_security_headers(response):
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     # Security: HSTS (Strict-Transport-Security)
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+
+    # Security: Permissions-Policy to restrict browser features
+    response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+
+    # Security: Strict cache control for admin routes to prevent sensitive data leakage
+    if request.path.startswith('/admin'):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
 
     # Content Security Policy: default-src 'self' allows only our own domain
     # style-src and font-src allow external resources from trusted domains (Google Fonts, Font Awesome)

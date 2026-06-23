@@ -17,3 +17,8 @@
 **Vulnerability:** API endpoints expecting JSON were vulnerable to unhandled exceptions (500 Internal Server Error) when receiving malformed payloads (e.g., a JSON list instead of a dictionary) or incorrect data types for fields.
 **Learning:** Flask's `request.json` can return various Python types depending on the `Content-Type: application/json` payload. Accessing dictionary methods like `.get()` on a list causes an `AttributeError`.
 **Prevention:** Always verify that `request.json` is a dictionary using `isinstance(data, dict)` and validate that required fields are of the expected type (e.g., `isinstance(val, str)`) before processing.
+
+## 2026-06-26 - Sensitive Data Exposure via Browser Cache
+**Vulnerability:** Admin dashboard data (including contact messages and transaction history) could be stored in browser or intermediary caches, potentially exposing sensitive information if a user accesses the dashboard on a shared or public computer.
+**Learning:** By default, Flask and most web servers do not set strict cache-control headers for authenticated routes, leaving sensitive data vulnerable to local storage.
+**Prevention:** Implement an `@app.after_request` handler that conditionally sets `Cache-Control: no-store, no-cache, must-revalidate, max-age=0` and `Pragma: no-cache` for all sensitive routes (e.g., those starting with `/admin`).
