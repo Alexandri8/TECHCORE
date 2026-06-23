@@ -100,6 +100,41 @@ document.addEventListener("DOMContentLoaded", () => {
         openPaymentBtn.addEventListener("click", openPaymentModal);
     }
 
+    // Mobile Menu Toggle logic
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    const navLinks = document.querySelector('.nav-links');
+    const navLinksItems = document.querySelectorAll('.nav-links a');
+
+    if (mobileMenuBtn && navLinks) {
+        mobileMenuBtn.addEventListener('click', () => {
+            const isOpened = mobileMenuBtn.getAttribute('aria-expanded') === 'true';
+            mobileMenuBtn.setAttribute('aria-expanded', !isOpened);
+            navLinks.classList.toggle('active');
+            document.body.classList.toggle('no-scroll');
+
+            // Toggle icon between bars and times
+            const icon = mobileMenuBtn.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-bars');
+                icon.classList.toggle('fa-times');
+            }
+        });
+
+        // Close menu when a link is clicked
+        navLinksItems.forEach(item => {
+            item.addEventListener('click', () => {
+                navLinks.classList.remove('active');
+                document.body.classList.remove('no-scroll');
+                mobileMenuBtn.setAttribute('aria-expanded', 'false');
+                const icon = mobileMenuBtn.querySelector('i');
+                if (icon) {
+                    icon.classList.add('fa-bars');
+                    icon.classList.remove('fa-times');
+                }
+            });
+        });
+    }
+
     const closePaymentBtn = document.getElementById("closePaymentBtn");
     if (closePaymentBtn) {
         closePaymentBtn.addEventListener("click", closePaymentModal);
