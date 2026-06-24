@@ -105,6 +105,21 @@ document.addEventListener("DOMContentLoaded", () => {
         closePaymentBtn.addEventListener("click", closePaymentModal);
     }
 
+    // 4. Mobile Menu Toggle
+    const mobileBtn = document.querySelector('.mobile-menu-btn');
+    const navLinks = document.querySelector('.nav-links');
+    if (mobileBtn && navLinks) {
+        const toggle = () => {
+            const open = mobileBtn.getAttribute('aria-expanded') === 'true';
+            mobileBtn.setAttribute('aria-expanded', !open);
+            navLinks.classList.toggle('active');
+            document.body.style.overflow = open ? '' : 'hidden';
+            mobileBtn.querySelector('i').className = open ? 'fas fa-bars' : 'fas fa-times';
+        };
+        mobileBtn.onclick = toggle;
+        navLinks.onclick = (e) => { if (e.target.tagName === 'A') toggle(); };
+    }
+
     const payBtn = document.getElementById("payBtn");
     if (payBtn) {
         payBtn.addEventListener("click", payWithPaystack);

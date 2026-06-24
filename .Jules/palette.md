@@ -13,3 +13,7 @@
 ## 2026-06-15 - [Enhanced Character Counter Feedback and Accessibility]
 **Learning:** For textareas with character limits, linking the counter via `aria-describedby` provides a non-intrusive way for screen reader users to discover the limit. Furthermore, providing multi-stage visual feedback (e.g., warning at 90%, danger at 98%) helps users anticipate the limit without needing to constantly check the number.
 **Action:** Always link character counters to their inputs via ARIA and implement progressive visual cues for inputs with length constraints.
+
+## 2026-06-24 - [Compact Micro-UX Mobile Navigation]
+**Learning:** Mobile navigation overlays can be implemented within strict line limits by utilizing CSS shorthand (e.g., `inset: 0`) and compact JS logic. Combining attribute updates (like `aria-expanded`) with class toggles in a single arrow function ensures both functionality and accessibility are preserved without bloating the codebase.
+**Action:** Use shorthand properties and consolidated JS handlers for secondary UI components like mobile menus to maintain a "micro" footprint.
