@@ -86,5 +86,16 @@ class SecurityTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("Valid email is required", json.loads(response.data)['message'])
 
+    def test_login_length_validation(self):
+        # Test username too long
+        response = self.client.post('/login',
+                                    data={'username': 'a' * 81, 'password': 'password'})
+        self.assertIn(b"Invalid username or password length", response.data)
+
+        # Test password too long
+        response = self.client.post('/login',
+                                    data={'username': 'admin', 'password': 'a' * 257})
+        self.assertIn(b"Invalid username or password length", response.data)
+
 if __name__ == '__main__':
     unittest.main()

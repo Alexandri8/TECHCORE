@@ -17,3 +17,8 @@
 **Vulnerability:** API endpoints expecting JSON were vulnerable to unhandled exceptions (500 Internal Server Error) when receiving malformed payloads (e.g., a JSON list instead of a dictionary) or incorrect data types for fields.
 **Learning:** Flask's `request.json` can return various Python types depending on the `Content-Type: application/json` payload. Accessing dictionary methods like `.get()` on a list causes an `AttributeError`.
 **Prevention:** Always verify that `request.json` is a dictionary using `isinstance(data, dict)` and validate that required fields are of the expected type (e.g., `isinstance(val, str)`) before processing.
+
+## 2026-06-25 - Password Hash Truncation Risk
+**Vulnerability:** The `User.password_hash` column was limited to 128 characters, which could lead to truncation of modern hashes (like scrypt used by Werkzeug 3.0+) which are typically 162 characters long. Truncated hashes cause authentication failures.
+**Learning:** Modern password hashing algorithms produce longer outputs than traditional ones. Database schema must be designed with enough headroom for future-proofing.
+**Prevention:** Use at least 256 characters for password hash columns. Always verify the output length of the chosen hashing algorithm.
