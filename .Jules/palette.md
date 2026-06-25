@@ -13,3 +13,7 @@
 ## 2026-06-15 - [Enhanced Character Counter Feedback and Accessibility]
 **Learning:** For textareas with character limits, linking the counter via `aria-describedby` provides a non-intrusive way for screen reader users to discover the limit. Furthermore, providing multi-stage visual feedback (e.g., warning at 90%, danger at 98%) helps users anticipate the limit without needing to constantly check the number.
 **Action:** Always link character counters to their inputs via ARIA and implement progressive visual cues for inputs with length constraints.
+
+## 2026-06-16 - [Mobile Navigation Overlay and Scroll Locking]
+**Learning:** For landing pages with anchor links and full-screen mobile overlays, it's critical to implement an "auto-close" mechanism that triggers when a link is clicked, alongside body scroll locking (`overflow: hidden`). This ensures the user is actually taken to the target section and doesn't remain trapped behind the overlay.
+**Action:** Implement a shared `.no-scroll` utility and ensure all mobile navigation links trigger a close event for the overlay.
