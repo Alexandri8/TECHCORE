@@ -94,6 +94,13 @@ def login():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+
+        # Security: Server-side length validation to prevent DoS during hashing
+        if not isinstance(username, str) or not isinstance(password, str) or \
+           len(username) > 80 or len(password) > 256:
+            flash("Invalid input")
+            return render_template("login.html"), 400
+
         user = User.query.filter_by(username=username).first()
         
         if user and user.check_password(password):
@@ -287,6 +294,13 @@ def add_security_headers(response):
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     # Security: HSTS (Strict-Transport-Security)
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    # Security: Permissions-Policy to restrict browser features
+    response.headers['Permissions-Policy'] = 'camera=(), geolocation=(), microphone=()'
+
+    # Security: Prevent sensitive data leakage via cache for admin routes
+    if request.path.startswith('/admin'):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
 
     # Content Security Policy: default-src 'self' allows only our own domain
     # style-src and font-src allow external resources from trusted domains (Google Fonts, Font Awesome)
