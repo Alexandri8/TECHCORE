@@ -105,6 +105,44 @@ document.addEventListener("DOMContentLoaded", () => {
         closePaymentBtn.addEventListener("click", closePaymentModal);
     }
 
+    // Mobile Menu Toggle logic
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    const navLinks = document.querySelector('.nav-links');
+
+    const toggleMobileMenu = () => {
+        const isOpen = navLinks.classList.toggle('active');
+        document.body.classList.toggle('no-scroll');
+
+        // Update ARIA
+        mobileMenuBtn.setAttribute('aria-expanded', isOpen);
+
+        // Swap Icon
+        const icon = mobileMenuBtn.querySelector('i');
+        if (isOpen) {
+            icon.classList.replace('fa-bars', 'fa-xmark');
+        } else {
+            icon.classList.replace('fa-xmark', 'fa-bars');
+        }
+    };
+
+    if (mobileMenuBtn && navLinks) {
+        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+
+        // Close menu on link click
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (navLinks.classList.contains('active')) toggleMobileMenu();
+            });
+        });
+
+        // Close on backdrop click
+        navLinks.addEventListener('click', (e) => {
+            if (e.target === navLinks) {
+                toggleMobileMenu();
+            }
+        });
+    }
+
     const payBtn = document.getElementById("payBtn");
     if (payBtn) {
         payBtn.addEventListener("click", payWithPaystack);
