@@ -110,6 +110,48 @@ document.addEventListener("DOMContentLoaded", () => {
         payBtn.addEventListener("click", payWithPaystack);
     }
 
+    // Mobile Menu Toggle logic
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    const navLinks = document.querySelector('.nav-links');
+    const menuIcon = mobileMenuBtn ? mobileMenuBtn.querySelector('i') : null;
+
+    if (mobileMenuBtn && navLinks) {
+        mobileMenuBtn.addEventListener('click', () => {
+            const isExpanded = mobileMenuBtn.getAttribute('aria-expanded') === 'true';
+            navLinks.classList.toggle('active');
+            document.body.classList.toggle('no-scroll');
+            mobileMenuBtn.setAttribute('aria-expanded', !isExpanded);
+            if (menuIcon) {
+                menuIcon.classList.toggle('fa-bars');
+                menuIcon.classList.toggle('fa-times');
+            }
+        });
+
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('active');
+                document.body.classList.remove('no-scroll');
+                mobileMenuBtn.setAttribute('aria-expanded', 'false');
+                if (menuIcon) {
+                    menuIcon.classList.add('fa-bars');
+                    menuIcon.classList.remove('fa-times');
+                }
+            });
+        });
+
+        navLinks.addEventListener('click', (e) => {
+            if (e.target === navLinks) {
+                navLinks.classList.remove('active');
+                document.body.classList.remove('no-scroll');
+                mobileMenuBtn.setAttribute('aria-expanded', 'false');
+                if (menuIcon) {
+                    menuIcon.classList.add('fa-bars');
+                    menuIcon.classList.remove('fa-times');
+                }
+            }
+        });
+    }
+
     // 4. Handle Server-side Payment Notifications
     const paymentStatus = document.body.dataset.paymentStatus;
     if (paymentStatus === 'success') {
