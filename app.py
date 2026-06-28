@@ -5,6 +5,8 @@ from flask_wtf.csrf import CSRFProtect
 import os
 import requests
 import uuid
+import gzip
+import io
 from sqlalchemy import event
 from dotenv import load_dotenv
 
@@ -280,10 +282,13 @@ def verify_payment():
     return render_template("index.html", payment_status="failed")
 
 @app.after_request
-def add_security_headers(response):
-    """Add security headers to every response."""
+def add_security_headers_and_compress(response):
+    """Add security headers and compress response if applicable."""
+    # Add security headers
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-Content-Type-Options'] = 'nosniff'
+    # Optimization: Use response.vary.add to safely append to Vary header
+    response.vary.add('Accept-Encoding')
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     # Security: HSTS (Strict-Transport-Security)
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
@@ -302,6 +307,38 @@ def add_security_headers(response):
         "base-uri 'self'; "
         "form-action 'self';"
     )
+
+    # Optimization: Dynamic Gzip compression for text-based responses
+    # Only compress if client supports it, response is successful, and size > 500 bytes
+    accept_encoding = request.headers.get('Accept-Encoding', '').lower()
+
+    if (
+        response.status_code < 200 or
+        response.status_code >= 300 or
+        response.direct_passthrough or
+        'gzip' not in accept_encoding or
+        'Content-Encoding' in response.headers
+    ):
+        return response
+
+    content_type = response.mimetype
+    # Compress common text-based formats
+    if content_type not in ['text/html', 'text/css', 'application/javascript', 'text/javascript', 'application/json']:
+        return response
+
+    content = response.get_data()
+    if len(content) < 500:
+        return response
+
+    gzip_buffer = io.BytesIO()
+    with gzip.GzipFile(mode='wb', fileobj=gzip_buffer) as f:
+        f.write(content)
+
+    compressed_data = gzip_buffer.getvalue()
+    response.set_data(compressed_data)
+    response.headers['Content-Encoding'] = 'gzip'
+    response.headers['Content-Length'] = len(compressed_data)
+
     return response
 
 if __name__ == "__main__":
