@@ -17,3 +17,8 @@
 **Vulnerability:** API endpoints expecting JSON were vulnerable to unhandled exceptions (500 Internal Server Error) when receiving malformed payloads (e.g., a JSON list instead of a dictionary) or incorrect data types for fields.
 **Learning:** Flask's `request.json` can return various Python types depending on the `Content-Type: application/json` payload. Accessing dictionary methods like `.get()` on a list causes an `AttributeError`.
 **Prevention:** Always verify that `request.json` is a dictionary using `isinstance(data, dict)` and validate that required fields are of the expected type (e.g., `isinstance(val, str)`) before processing.
+
+## 2026-06-28 - Login Denial of Service and Hash Truncation Risk
+**Vulnerability:** The login route lacked length validation on `username` and `password` fields, potentially allowing "Long Password" DoS attacks. Additionally, the 128-character limit for `password_hash` was insufficient for modern `scrypt` or `argon2` hashes.
+**Learning:** Security-sensitive operations like password hashing are CPU-intensive; validating input length before processing is a critical defense against resource exhaustion. Database schemas must also keep pace with evolving cryptographic standards.
+**Prevention:** Enforce strict server-side length limits (e.g., 256 characters for passwords) on all authentication endpoints and use a minimum of 256 characters for hash storage columns.

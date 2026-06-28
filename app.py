@@ -94,6 +94,16 @@ def login():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+
+        # Security: Validate types and enforce length limits to prevent DoS/resource exhaustion
+        if not isinstance(username, str) or not isinstance(password, str):
+            flash("Invalid input format")
+            return render_template("login.html"), 400
+
+        if len(username) > 80 or len(password) > 256:
+            flash("Input exceeds maximum allowed length")
+            return render_template("login.html"), 400
+
         user = User.query.filter_by(username=username).first()
         
         if user and user.check_password(password):
