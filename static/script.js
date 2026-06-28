@@ -66,13 +66,12 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Modal Keyboard Accessibility
-    document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
+    // Keyboard Accessibility (Escape key)
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
             const modal = document.getElementById("paymentModal");
-            if (modal && (modal.style.display === "block" || modal.classList.contains('show'))) {
-                closePaymentModal();
-            }
+            if (modal && (modal.style.display === "block" || modal.classList.contains('show'))) closePaymentModal();
+            closeMobileMenu();
         }
     });
 
@@ -98,6 +97,25 @@ document.addEventListener("DOMContentLoaded", () => {
     const openPaymentBtn = document.getElementById("openPaymentBtn");
     if (openPaymentBtn) {
         openPaymentBtn.addEventListener("click", openPaymentModal);
+    }
+
+    // Mobile Menu Logic
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    const navLinks = document.querySelector('.nav-links');
+
+    if (mobileMenuBtn && navLinks) {
+        mobileMenuBtn.addEventListener('click', () => {
+            const isOpen = navLinks.classList.toggle('active');
+            mobileMenuBtn.setAttribute('aria-expanded', isOpen);
+            mobileMenuBtn.setAttribute('aria-label', isOpen ? 'Close' : 'Open' + ' navigation menu');
+            document.body.classList.toggle('no-scroll', isOpen);
+            const icon = mobileMenuBtn.querySelector('i');
+            if (icon) icon.className = isOpen ? 'fas fa-times' : 'fas fa-bars';
+        });
+
+        navLinks.addEventListener('click', (e) => {
+            if (navLinks.classList.contains('active') && (e.target.closest('a') || e.target === navLinks)) closeMobileMenu();
+        });
     }
 
     const closePaymentBtn = document.getElementById("closePaymentBtn");
@@ -291,10 +309,21 @@ function payWithPaystack() {
     });
 }
 
-// Close modal when clicking outside
-window.onclick = function(event) {
-    const modal = document.getElementById("paymentModal");
-    if (event.target == modal) {
-        closePaymentModal();
+// Helper to close mobile menu
+function closeMobileMenu() {
+    const btn = document.querySelector('.mobile-menu-btn');
+    const nav = document.querySelector('.nav-links');
+    if (nav?.classList.contains('active')) {
+        nav.classList.remove('active');
+        btn.setAttribute('aria-expanded', 'false');
+        btn.setAttribute('aria-label', 'Open navigation menu');
+        document.body.classList.remove('no-scroll');
+        const icon = btn.querySelector('i');
+        if (icon) icon.className = 'fas fa-bars';
     }
+}
+
+// Close modal when clicking outside
+window.onclick = (e) => {
+    if (e.target == document.getElementById("paymentModal")) closePaymentModal();
 }

@@ -51,6 +51,10 @@ body {
     position: relative;
 }
 
+body.no-scroll {
+    overflow: hidden;
+}
+
 h1,
 h2,
 h3,
@@ -913,11 +917,35 @@ textarea:focus-visible {
 @media (max-width: 768px) {
     .nav-links {
         display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 15, 28, 0.95);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1500;
+        gap: 2.5rem;
     }
 
-    /* Mobile menu logic via JS if needed, hiding for now */
+    .nav-links.active {
+        display: flex;
+    }
+
+    .nav-links a {
+        font-size: 1.5rem !important;
+        font-weight: 600;
+    }
+
+    .nav-links a.btn {
+        width: 80%;
+    }
+
     .mobile-menu-btn {
         display: block;
+        position: relative;
+        z-index: 2000;
     }
 
     .stats-row {
