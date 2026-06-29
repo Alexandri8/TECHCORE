@@ -5,6 +5,8 @@ from flask_wtf.csrf import CSRFProtect
 import os
 import requests
 import uuid
+import gzip
+import io
 from sqlalchemy import event
 from dotenv import load_dotenv
 
@@ -278,6 +280,53 @@ def verify_payment():
         payment.status = "failed"
         db.session.commit()
     return render_template("index.html", payment_status="failed")
+
+@app.after_request
+def compress_response(response):
+    """Compress text-based responses using Gzip to reduce payload size."""
+    # Optimization: Only compress text-based responses that are large enough to benefit
+    # and if the client supports Gzip.
+    accept_encoding = request.headers.get('Accept-Encoding', '').lower()
+
+    # Skip if gzip is not supported or if the response is already encoded
+    if 'gzip' not in accept_encoding or response.headers.get('Content-Encoding'):
+        return response
+
+    # Skip if response is not a text-based format
+    mimetypes = [
+        'text/html', 'text/css', 'text/javascript', 'application/javascript',
+        'application/json', 'application/xml', 'text/plain'
+    ]
+    content_type = response.mimetype
+    if content_type not in mimetypes:
+        return response
+
+    # Optimization: Ensure we are not trying to compress streamed responses
+    # that haven't been fully loaded into memory yet.
+    if response.direct_passthrough:
+        return response
+
+    # Skip very small responses (less than 500 bytes)
+    response_data = response.get_data()
+    if len(response_data) < 500:
+        return response
+
+    gzip_buffer = io.BytesIO()
+    with gzip.GzipFile(mode='wb', fileobj=gzip_buffer) as f:
+        f.write(response_data)
+
+    compressed_data = gzip_buffer.getvalue()
+
+    # Only use compression if it actually makes the response smaller
+    if len(compressed_data) < len(response_data):
+        response.set_data(compressed_data)
+        response.headers['Content-Encoding'] = 'gzip'
+        response.headers['Content-Length'] = len(compressed_data)
+
+        # Ensure proxies cache compressed and uncompressed versions separately
+        response.vary.add('Accept-Encoding')
+
+    return response
 
 @app.after_request
 def add_security_headers(response):

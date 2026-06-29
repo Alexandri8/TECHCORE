@@ -5,3 +5,7 @@
 ## 2025-05-20 - SQLite Synchronous Mode for Write Performance
 **Learning:** In SQLite's WAL mode, `PRAGMA synchronous=NORMAL` provides a massive performance boost for write operations compared to the default `FULL`. It reduces the number of `fsync()` operations by not syncing the WAL file after every transaction, while still maintaining integrity against application crashes (though not power failures). In this app, it reduced write latency by ~70% (from 1.08s to 0.32s for 500 commits).
 **Action:** Use `PRAGMA synchronous=NORMAL` in conjunction with `WAL` mode for SQLite databases where high write throughput is needed and power-loss data loss is an acceptable risk for the performance gain.
+
+## 2026-06-29 - Flask Gzip Compression and direct_passthrough
+**Learning:** In Flask, implementing dynamic Gzip compression in an @app.after_request handler can cause a RuntimeError: Attempted implicit sequence conversion but the response object is in direct passthrough mode if the response is in direct_passthrough mode (common when serving static files via send_static_file).
+**Action:** Always check if response.direct_passthrough is true and skip compression if it is.
