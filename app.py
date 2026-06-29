@@ -5,6 +5,7 @@ from flask_wtf.csrf import CSRFProtect
 import os
 import requests
 import uuid
+import re
 from sqlalchemy import event
 from dotenv import load_dotenv
 
@@ -94,6 +95,17 @@ def login():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+
+        # Security: Validate presence and types of input
+        if not isinstance(username, str) or not isinstance(password, str):
+            flash("Invalid input format")
+            return render_template("login.html"), 400
+
+        # Security: Enforce length limits to prevent resource exhaustion during hashing
+        if len(username) > 80 or len(password) > 256:
+            flash("Input exceeds maximum allowed length")
+            return render_template("login.html"), 400
+
         user = User.query.filter_by(username=username).first()
         
         if user and user.check_password(password):
@@ -235,6 +247,10 @@ def verify_payment():
     reference = request.args.get("reference")
     # Optimization: Early return if reference is missing
     if not reference:
+        return redirect(url_for('home'))
+
+    # Security: Validate reference format to prevent injection/SSRF
+    if not isinstance(reference, str) or not re.match(r'^[a-zA-Z0-9\-_]+$', reference):
         return redirect(url_for('home'))
         
     payment = Payment.query.filter_by(reference=reference).first()
