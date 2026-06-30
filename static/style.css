@@ -51,6 +51,10 @@ body {
     position: relative;
 }
 
+body.no-scroll {
+    overflow: hidden;
+}
+
 h1,
 h2,
 h3,
@@ -783,6 +787,10 @@ textarea:focus-visible {
     display: block;
 }
 
+.no-scroll {
+    overflow: hidden !important;
+}
+
 /* ================== Footer ================== */
 .footer {
     border-top: 1px solid var(--border-color);
@@ -913,11 +921,46 @@ textarea:focus-visible {
 @media (max-width: 768px) {
     .nav-links {
         display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 15, 28, 0.95);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 1500;
+        gap: 2.5rem;
     }
 
-    /* Mobile menu logic via JS if needed, hiding for now */
+    .nav-links.active {
+        display: flex;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .nav-links a:not(.btn) {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .nav-links .nav-btn {
+        width: 80%;
+        max-width: 300px;
+        padding: 1.2rem;
+        font-size: 1.1rem;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    /* Mobile menu logic via JS */
     .mobile-menu-btn {
         display: block;
+        position: relative;
+        z-index: 2000;
+        padding: 0.5rem;
     }
 
     .stats-row {
@@ -971,6 +1014,10 @@ textarea:focus-visible {
 
 .close-modal:hover {
     color: white;
+}
+
+.no-scroll {
+    overflow: hidden;
 }
 
 .w-100 {
