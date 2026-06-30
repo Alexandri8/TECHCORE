@@ -1,3 +1,5 @@
+import os
+os.environ['TESTING'] = 'true'
 import unittest
 from app import app, db
 from models import Payment
