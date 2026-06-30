@@ -13,6 +13,7 @@ class SecurityHeadersTestCase(unittest.TestCase):
         self.assertEqual(response.headers.get('X-Frame-Options'), 'SAMEORIGIN')
         self.assertEqual(response.headers.get('X-Content-Type-Options'), 'nosniff')
         self.assertEqual(response.headers.get('Referrer-Policy'), 'strict-origin-when-cross-origin')
+        self.assertEqual(response.headers.get('Permissions-Policy'), 'camera=(), microphone=(), geolocation=()')
 
         csp = response.headers.get('Content-Security-Policy')
         self.assertIn("default-src 'self'", csp)
