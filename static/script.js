@@ -66,13 +66,22 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Modal Keyboard Accessibility
-    document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-            const modal = document.getElementById("paymentModal");
-            if (modal && (modal.style.display === "block" || modal.classList.contains('show'))) {
-                closePaymentModal();
-            }
+    // 3. Mobile Menu Toggle
+    const mobileBtn = document.querySelector('.mobile-menu-btn'), nav = document.querySelector('.nav-links'), icon = mobileBtn?.querySelector('i');
+    const toggleMenu = (s) => {
+        const active = s ?? !nav.classList.contains('active');
+        nav.classList.toggle('active', active); document.body.classList.toggle('no-scroll', active);
+        mobileBtn.setAttribute('aria-expanded', active);
+        if (icon) { icon.classList.toggle('fa-bars', !active); icon.classList.toggle('fa-times', active); }
+    };
+    mobileBtn?.addEventListener('click', () => toggleMenu());
+    nav?.addEventListener('click', (e) => (e.target.closest('a') || e.target === nav) && toggleMenu(false));
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            const m = document.getElementById("paymentModal");
+            if (m?.style.display === "block" || m?.classList.contains('show')) return closePaymentModal();
+            if (nav?.classList.contains('active')) toggleMenu(false);
         }
     });
 
