@@ -13,3 +13,7 @@
 ## 2026-06-15 - [Enhanced Character Counter Feedback and Accessibility]
 **Learning:** For textareas with character limits, linking the counter via `aria-describedby` provides a non-intrusive way for screen reader users to discover the limit. Furthermore, providing multi-stage visual feedback (e.g., warning at 90%, danger at 98%) helps users anticipate the limit without needing to constantly check the number.
 **Action:** Always link character counters to their inputs via ARIA and implement progressive visual cues for inputs with length constraints.
+
+## 2026-06-30 - [Robust Mobile Navigation and Global Dismissal]
+**Learning:** For full-screen mobile overlays, combining body scroll locking (`overflow: hidden`), backdrop click dismissal, and a consolidated `Escape` key listener ensures a high-quality, predictable mobile experience. Additionally, explicitly syncing `aria-expanded` and swapping FontAwesome classes on the toggle button provides clear state feedback for both visual and screen reader users.
+**Action:** Always implement body locking and multi-method dismissal (backdrop/Esc) for mobile menus and ensure accessible state attributes are updated in the toggle logic.
