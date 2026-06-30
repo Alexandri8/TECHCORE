@@ -100,6 +100,31 @@ document.addEventListener("DOMContentLoaded", () => {
         openPaymentBtn.addEventListener("click", openPaymentModal);
     }
 
+    const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
+    const navLinks = document.querySelector(".nav-links");
+    if (mobileMenuBtn && navLinks) {
+        mobileMenuBtn.addEventListener("click", () => {
+            const isActive = navLinks.classList.toggle("active");
+            document.body.classList.toggle("no-scroll");
+            mobileMenuBtn.setAttribute("aria-expanded", isActive);
+            const icon = mobileMenuBtn.querySelector("i");
+            if (icon) {
+                icon.className = isActive ? "fas fa-times" : "fas fa-bars";
+            }
+        });
+
+        // Close menu when a link is clicked
+        navLinks.querySelectorAll("a").forEach(link => {
+            link.addEventListener("click", () => {
+                navLinks.classList.remove("active");
+                document.body.classList.remove("no-scroll");
+                mobileMenuBtn.setAttribute("aria-expanded", "false");
+                const icon = mobileMenuBtn.querySelector("i");
+                if (icon) icon.className = "fas fa-bars";
+            });
+        });
+    }
+
     const closePaymentBtn = document.getElementById("closePaymentBtn");
     if (closePaymentBtn) {
         closePaymentBtn.addEventListener("click", closePaymentModal);
@@ -203,6 +228,8 @@ document.addEventListener("DOMContentLoaded", () => {
 function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
+    notification.setAttribute('role', 'status');
+    notification.setAttribute('aria-live', 'polite');
     notification.innerText = message;
     document.body.appendChild(notification);
 

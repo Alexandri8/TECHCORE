@@ -1016,6 +1016,10 @@ textarea:focus-visible {
     color: white;
 }
 
+.no-scroll {
+    overflow: hidden;
+}
+
 .w-100 {
     width: 100%;
 }
