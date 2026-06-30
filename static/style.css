@@ -787,6 +787,10 @@ textarea:focus-visible {
     display: block;
 }
 
+.no-scroll {
+    overflow: hidden !important;
+}
+
 /* ================== Footer ================== */
 .footer {
     border-top: 1px solid var(--border-color);
@@ -917,10 +921,6 @@ textarea:focus-visible {
 @media (max-width: 768px) {
     .nav-links {
         display: none;
-    }
-
-    .nav-links.active {
-        display: flex;
         position: fixed;
         inset: 0;
         background: rgba(10, 15, 28, 0.95);
@@ -929,25 +929,38 @@ textarea:focus-visible {
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        z-index: 999;
+        z-index: 1500;
         gap: 2.5rem;
-        animation: mobileNavFade 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .nav-links.active a {
+    .nav-links.active {
+        display: flex;
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    .nav-links a:not(.btn) {
         font-size: 1.5rem;
         font-weight: 700;
     }
 
-    @keyframes mobileNavFade {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
+    .nav-links .nav-btn {
+        width: 80%;
+        max-width: 300px;
+        padding: 1.2rem;
+        font-size: 1.1rem;
     }
 
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    /* Mobile menu logic via JS */
     .mobile-menu-btn {
         display: block;
         position: relative;
-        z-index: 1001;
+        z-index: 2000;
+        padding: 0.5rem;
     }
 
     .stats-row {
