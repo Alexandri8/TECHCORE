@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, after_this_request
 from models import db, ContactMessage, User, Payment
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_wtf.csrf import CSRFProtect
 import os
 import requests
 import uuid
+import re
 from sqlalchemy import event
 from dotenv import load_dotenv
 
@@ -66,21 +67,22 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 # Create database tables and default admin securely
-with app.app_context():
-    if not os.path.exists(os.path.join(basedir, 'instance')):
-        os.makedirs(os.path.join(basedir, 'instance'))
-    db.create_all()
-    
-    # Securely create admin user using environment variables
-    admin_username = os.getenv('ADMIN_USERNAME', 'admin')
-    admin_password = os.getenv('ADMIN_PASSWORD')
-    
-    if admin_password and not User.query.filter_by(username=admin_username).first():
-        admin = User(username=admin_username)
-        admin.set_password(admin_password)
-        db.session.add(admin)
-        db.session.commit()
-        print(f"Admin user '{admin_username}' created successfully.")
+if not os.getenv('TESTING') == 'true':
+    with app.app_context():
+        if not os.path.exists(os.path.join(basedir, 'instance')):
+            os.makedirs(os.path.join(basedir, 'instance'))
+        db.create_all()
+
+        # Securely create admin user using environment variables
+        admin_username = os.getenv('ADMIN_USERNAME', 'admin')
+        admin_password = os.getenv('ADMIN_PASSWORD')
+
+        if admin_password and not User.query.filter_by(username=admin_username).first():
+            admin = User(username=admin_username)
+            admin.set_password(admin_password)
+            db.session.add(admin)
+            db.session.commit()
+            print(f"Admin user '{admin_username}' created successfully.")
 
 @app.route("/")
 def home():
@@ -94,6 +96,17 @@ def login():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+
+        # Security: Server-side validation of input types and lengths
+        # 80 chars for username, 256 for password matches database and security best practices
+        if not isinstance(username, str) or not isinstance(password, str):
+            flash("Invalid input format")
+            return render_template("login.html"), 400
+
+        if len(username) > 80 or len(password) > 256:
+            flash("Input exceeds maximum allowed length")
+            return render_template("login.html"), 400
+
         user = User.query.filter_by(username=username).first()
         
         if user and user.check_password(password):
@@ -113,6 +126,13 @@ def logout():
 @app.route("/admin")
 @login_required
 def admin():
+    # Security: Strict cache control for admin panel to prevent data leakage
+    @after_this_request
+    def add_cache_control(response):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        return response
+
     # Optimization: Added pagination to avoid loading all records at once
     message_page = request.args.get('message_page', 1, type=int)
     payment_page = request.args.get('payment_page', 1, type=int)
@@ -233,8 +253,12 @@ def initialize_payment():
 @app.route("/verify-payment")
 def verify_payment():
     reference = request.args.get("reference")
-    # Optimization: Early return if reference is missing
-    if not reference:
+    # Security: Early return and validation for reference parameter
+    if not reference or not isinstance(reference, str):
+        return redirect(url_for('home'))
+
+    # Security: Validate reference format to prevent injection/SSRF
+    if not re.match(r'^[a-zA-Z0-9\-_]+$', reference):
         return redirect(url_for('home'))
         
     payment = Payment.query.filter_by(reference=reference).first()
@@ -287,6 +311,8 @@ def add_security_headers(response):
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     # Security: HSTS (Strict-Transport-Security)
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    # Security: Permissions-Policy to restrict browser features
+    response.headers['Permissions-Policy'] = 'camera=(), geolocation=(), microphone=()'
 
     # Content Security Policy: default-src 'self' allows only our own domain
     # style-src and font-src allow external resources from trusted domains (Google Fonts, Font Awesome)
