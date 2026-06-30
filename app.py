@@ -96,6 +96,17 @@ def login():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+
+        # Security: Server-side input length validation to match database constraints
+        # and prevent resource exhaustion during hashing for extremely long passwords.
+        if not isinstance(username, str) or len(username) > 80:
+            flash("Invalid input")
+            return render_template("login.html")
+
+        if not isinstance(password, str) or len(password) > 256:
+            flash("Invalid input")
+            return render_template("login.html")
+
         user = User.query.filter_by(username=username).first()
         
         if user and user.check_password(password):
@@ -282,16 +293,13 @@ def verify_payment():
     return render_template("index.html", payment_status="failed")
 
 @app.after_request
-def handle_response_enhancements(response):
-    """Add security headers and dynamic Gzip compression."""
-    # Security Headers
+def apply_optimizations_and_security(response):
+    """Add security headers and apply Gzip compression where appropriate."""
+    # 1. Security Headers
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-Content-Type-Options'] = 'nosniff'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
-    # Security: HSTS (Strict-Transport-Security)
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-
-    # Content Security Policy: default-src 'self' allows only our own domain
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
         "script-src 'self'; "
@@ -304,39 +312,33 @@ def handle_response_enhancements(response):
         "form-action 'self';"
     )
 
-    # Optimization: Dynamic Gzip compression for text-based responses
-    # This significantly reduces payload size for HTML, CSS, JS, and JSON
-    compressible_mimetypes = [
-        'text/html', 'text/css', 'application/javascript',
-        'application/json', 'text/javascript'
-    ]
+    # 2. Dynamic Gzip Compression
+    # Performance: Reduce payload size for text-based responses
+    accept_encoding = request.headers.get('Accept-Encoding', '').lower()
+    if (
+        'gzip' in accept_encoding and
+        response.status_code == 200 and
+        not response.direct_passthrough and
+        'Content-Encoding' not in response.headers and
+        (response.mimetype in [
+            'text/html', 'text/css', 'application/javascript',
+            'text/javascript', 'application/json', 'application/xml', 'text/xml'
+        ])
+    ):
+        response_data = response.get_data()
+        # Only compress if the response is of significant size
+        if len(response_data) > 500:
+            gzip_buffer = io.BytesIO()
+            with gzip.GzipFile(mode='wb', fileobj=gzip_buffer) as f:
+                f.write(response_data)
 
-    if response.mimetype in compressible_mimetypes:
-        # Ensure caches differentiate between compressed and uncompressed versions
-        # This should be set if the response COULD be compressed based on Accept-Encoding
-        response.vary.add('Accept-Encoding')
+            compressed_data = gzip_buffer.getvalue()
+            response.set_data(compressed_data)
+            response.headers['Content-Encoding'] = 'gzip'
+            response.headers['Content-Length'] = len(compressed_data)
 
-        accept_encoding = request.headers.get('Accept-Encoding', '').lower()
-
-        if (
-            'gzip' in accept_encoding and
-            response.status_code == 200 and
-            not response.direct_passthrough and
-            'Content-Encoding' not in response.headers
-        ):
-            # Get data once to avoid repeated calls
-            content = response.get_data()
-
-            # Only compress if response is worth compressing (> 500 bytes)
-            if len(content) > 500:
-                gzip_buffer = io.BytesIO()
-                with gzip.GzipFile(mode='wb', fileobj=gzip_buffer) as gzip_file:
-                    gzip_file.write(content)
-
-                # set_data automatically updates Content-Length
-                response.set_data(gzip_buffer.getvalue())
-                response.headers['Content-Encoding'] = 'gzip'
-
+    # Ensure proxy caches vary by Accept-Encoding
+    response.vary.add('Accept-Encoding')
     return response
 
 if __name__ == "__main__":
