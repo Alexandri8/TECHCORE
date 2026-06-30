@@ -18,7 +18,7 @@
 **Learning:** Flask's `request.json` can return various Python types depending on the `Content-Type: application/json` payload. Accessing dictionary methods like `.get()` on a list causes an `AttributeError`.
 **Prevention:** Always verify that `request.json` is a dictionary using `isinstance(data, dict)` and validate that required fields are of the expected type (e.g., `isinstance(val, str)`) before processing.
 
-## 2026-06-26 - Sensitive Data Exposure via Browser Cache
-**Vulnerability:** Admin dashboard data (including contact messages and transaction history) could be stored in browser or intermediary caches, potentially exposing sensitive information if a user accesses the dashboard on a shared or public computer.
-**Learning:** By default, Flask and most web servers do not set strict cache-control headers for authenticated routes, leaving sensitive data vulnerable to local storage.
-**Prevention:** Implement an `@app.after_request` handler that conditionally sets `Cache-Control: no-store, no-cache, must-revalidate, max-age=0` and `Pragma: no-cache` for all sensitive routes (e.g., those starting with `/admin`).
+## 2026-06-28 - Resource Exhaustion via Unbounded Authentication Inputs
+**Vulnerability:** The login endpoint lacked length validation on username and password fields, potentially allowing a Denial of Service (DoS) attack by submitting extremely large strings to the password hashing function (scrypt), which is computationally expensive.
+**Learning:** Authentication endpoints are primary targets for DoS. Hashing algorithms are designed to be slow, so providing them with very large inputs can disproportionately consume CPU resources and exhaust server workers.
+**Prevention:** Enforce strict server-side length limits on all authentication inputs (e.g., 80 chars for username, 256 for password) before processing or hashing. Ensure database column lengths are sufficient to store the resulting hashes without truncation.

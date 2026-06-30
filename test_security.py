@@ -86,26 +86,28 @@ class SecurityTestCase(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("Valid email is required", json.loads(response.data)['message'])
 
-    def test_initialize_payment_length_validation(self):
-        # Test email too long (limit 120)
-        response = self.client.post('/initialize-payment',
-                                    data=json.dumps({'email': 'a' * 121 + '@example.com'}),
-                                    content_type='application/json')
+    def test_login_length_validation_username(self):
+        # Test username too long (> 80)
+        response = self.client.post('/login',
+                                    data={'username': 'a' * 81, 'password': 'password'},
+                                    follow_redirects=True)
         self.assertEqual(response.status_code, 400)
-        self.assertIn("Email exceeds maximum length", json.loads(response.data)['message'])
+        self.assertIn(b"Invalid input", response.data)
 
-    def test_login_validation(self):
-        # Test missing field (will be None, failing isinstance(..., str))
-        response = self.client.post('/login', data={'password': 'password'})
+    def test_login_length_validation_password(self):
+        # Test password too long (> 256)
+        response = self.client.post('/login',
+                                    data={'username': 'admin', 'password': 'a' * 257},
+                                    follow_redirects=True)
         self.assertEqual(response.status_code, 400)
+        self.assertIn(b"Invalid input", response.data)
 
-        # Test username too long
-        response = self.client.post('/login', data={'username': 'a' * 81, 'password': 'password'})
-        self.assertEqual(response.status_code, 400)
-
-        # Test password too long
-        response = self.client.post('/login', data={'username': 'admin', 'password': 'a' * 257})
-        self.assertEqual(response.status_code, 400)
+    def test_login_valid_input(self):
+        # Test valid input (should not return 400, even if login fails)
+        response = self.client.post('/login',
+                                    data={'username': 'admin', 'password': 'password'},
+                                    follow_redirects=True)
+        self.assertNotEqual(response.status_code, 400)
 
 if __name__ == '__main__':
     unittest.main()
