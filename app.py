@@ -253,6 +253,10 @@ def verify_payment():
     # Optimization: Early return if reference is missing
     if not reference:
         return redirect(url_for('home'))
+
+    # Security: Validate reference format to prevent injection/SSRF
+    if not isinstance(reference, str) or not re.match(r'^[a-zA-Z0-9\-_]+$', reference):
+        return redirect(url_for('home'))
         
     payment = Payment.query.filter_by(reference=reference).first()
 
