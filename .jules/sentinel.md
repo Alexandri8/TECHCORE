@@ -18,7 +18,7 @@
 **Learning:** Flask's `request.json` can return various Python types depending on the `Content-Type: application/json` payload. Accessing dictionary methods like `.get()` on a list causes an `AttributeError`.
 **Prevention:** Always verify that `request.json` is a dictionary using `isinstance(data, dict)` and validate that required fields are of the expected type (e.g., `isinstance(val, str)`) before processing.
 
-## 2026-06-25 - Password Hash Truncation Risk
-**Vulnerability:** The `User.password_hash` column was limited to 128 characters, which could lead to truncation of modern hashes (like scrypt used by Werkzeug 3.0+) which are typically 162 characters long. Truncated hashes cause authentication failures.
-**Learning:** Modern password hashing algorithms produce longer outputs than traditional ones. Database schema must be designed with enough headroom for future-proofing.
-**Prevention:** Use at least 256 characters for password hash columns. Always verify the output length of the chosen hashing algorithm.
+## 2026-06-28 - Resource Exhaustion via Unbounded Authentication Inputs
+**Vulnerability:** The login endpoint lacked length validation on username and password fields, potentially allowing a Denial of Service (DoS) attack by submitting extremely large strings to the password hashing function (scrypt), which is computationally expensive.
+**Learning:** Authentication endpoints are primary targets for DoS. Hashing algorithms are designed to be slow, so providing them with very large inputs can disproportionately consume CPU resources and exhaust server workers.
+**Prevention:** Enforce strict server-side length limits on all authentication inputs (e.g., 80 chars for username, 256 for password) before processing or hashing. Ensure database column lengths are sufficient to store the resulting hashes without truncation.

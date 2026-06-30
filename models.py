@@ -8,7 +8,7 @@ db = SQLAlchemy()
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    # Security: Increased length to 256 to accommodate modern password hashes (e.g., scrypt)
+    # Increased to 256 to accommodate modern scrypt hashes (typically ~162 chars)
     password_hash = db.Column(db.String(256), nullable=False)
 
     def set_password(self, password):
