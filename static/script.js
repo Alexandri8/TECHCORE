@@ -66,13 +66,22 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Modal Keyboard Accessibility
-    document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-            const modal = document.getElementById("paymentModal");
-            if (modal && (modal.style.display === "block" || modal.classList.contains('show'))) {
-                closePaymentModal();
-            }
+    // 3. Mobile Menu Toggle
+    const mobileBtn = document.querySelector('.mobile-menu-btn'), nav = document.querySelector('.nav-links'), icon = mobileBtn?.querySelector('i');
+    const toggleMenu = (s) => {
+        const active = s ?? !nav.classList.contains('active');
+        nav.classList.toggle('active', active); document.body.classList.toggle('no-scroll', active);
+        mobileBtn.setAttribute('aria-expanded', active);
+        if (icon) { icon.classList.toggle('fa-bars', !active); icon.classList.toggle('fa-times', active); }
+    };
+    mobileBtn?.addEventListener('click', () => toggleMenu());
+    nav?.addEventListener('click', (e) => (e.target.closest('a') || e.target === nav) && toggleMenu(false));
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            const m = document.getElementById("paymentModal");
+            if (m?.style.display === "block" || m?.classList.contains('show')) return closePaymentModal();
+            if (nav?.classList.contains('active')) toggleMenu(false);
         }
     });
 
@@ -100,14 +109,119 @@ document.addEventListener("DOMContentLoaded", () => {
         openPaymentBtn.addEventListener("click", openPaymentModal);
     }
 
+    const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
+    const navLinks = document.querySelector(".nav-links");
+    if (mobileMenuBtn && navLinks) {
+        mobileMenuBtn.addEventListener("click", () => {
+            const isActive = navLinks.classList.toggle("active");
+            document.body.classList.toggle("no-scroll");
+            mobileMenuBtn.setAttribute("aria-expanded", isActive);
+            const icon = mobileMenuBtn.querySelector("i");
+            if (icon) {
+                icon.className = isActive ? "fas fa-times" : "fas fa-bars";
+            }
+        });
+
+        // Close menu when a link is clicked
+        navLinks.querySelectorAll("a").forEach(link => {
+            link.addEventListener("click", () => {
+                navLinks.classList.remove("active");
+                document.body.classList.remove("no-scroll");
+                mobileMenuBtn.setAttribute("aria-expanded", "false");
+                const icon = mobileMenuBtn.querySelector("i");
+                if (icon) icon.className = "fas fa-bars";
+            });
+        });
+    }
+
     const closePaymentBtn = document.getElementById("closePaymentBtn");
     if (closePaymentBtn) {
         closePaymentBtn.addEventListener("click", closePaymentModal);
     }
 
+    // Mobile Menu Toggle logic
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    const navLinks = document.querySelector('.nav-links');
+
+    const toggleMobileMenu = () => {
+        const isOpen = navLinks.classList.toggle('active');
+        document.body.classList.toggle('no-scroll');
+
+        // Update ARIA
+        mobileMenuBtn.setAttribute('aria-expanded', isOpen);
+
+        // Swap Icon
+        const icon = mobileMenuBtn.querySelector('i');
+        if (isOpen) {
+            icon.classList.replace('fa-bars', 'fa-xmark');
+        } else {
+            icon.classList.replace('fa-xmark', 'fa-bars');
+        }
+    };
+
+    if (mobileMenuBtn && navLinks) {
+        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+
+        // Close menu on link click
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (navLinks.classList.contains('active')) toggleMobileMenu();
+            });
+        });
+
+        // Close on backdrop click
+        navLinks.addEventListener('click', (e) => {
+            if (e.target === navLinks) {
+                toggleMobileMenu();
+            }
+        });
+    }
+
     const payBtn = document.getElementById("payBtn");
     if (payBtn) {
         payBtn.addEventListener("click", payWithPaystack);
+    }
+
+    // Mobile Menu Toggle logic
+    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+    const navLinks = document.querySelector('.nav-links');
+    const menuIcon = mobileMenuBtn ? mobileMenuBtn.querySelector('i') : null;
+
+    if (mobileMenuBtn && navLinks) {
+        mobileMenuBtn.addEventListener('click', () => {
+            const isExpanded = mobileMenuBtn.getAttribute('aria-expanded') === 'true';
+            navLinks.classList.toggle('active');
+            document.body.classList.toggle('no-scroll');
+            mobileMenuBtn.setAttribute('aria-expanded', !isExpanded);
+            if (menuIcon) {
+                menuIcon.classList.toggle('fa-bars');
+                menuIcon.classList.toggle('fa-times');
+            }
+        });
+
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('active');
+                document.body.classList.remove('no-scroll');
+                mobileMenuBtn.setAttribute('aria-expanded', 'false');
+                if (menuIcon) {
+                    menuIcon.classList.add('fa-bars');
+                    menuIcon.classList.remove('fa-times');
+                }
+            });
+        });
+
+        navLinks.addEventListener('click', (e) => {
+            if (e.target === navLinks) {
+                navLinks.classList.remove('active');
+                document.body.classList.remove('no-scroll');
+                mobileMenuBtn.setAttribute('aria-expanded', 'false');
+                if (menuIcon) {
+                    menuIcon.classList.add('fa-bars');
+                    menuIcon.classList.remove('fa-times');
+                }
+            }
+        });
     }
 
     // 4. Handle Server-side Payment Notifications
@@ -123,6 +237,8 @@ document.addEventListener("DOMContentLoaded", () => {
 function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
+    notification.setAttribute('role', 'status');
+    notification.setAttribute('aria-live', 'polite');
     notification.innerText = message;
     document.body.appendChild(notification);
 
@@ -291,10 +407,21 @@ function payWithPaystack() {
     });
 }
 
-// Close modal when clicking outside
-window.onclick = function(event) {
-    const modal = document.getElementById("paymentModal");
-    if (event.target == modal) {
-        closePaymentModal();
+// Helper to close mobile menu
+function closeMobileMenu() {
+    const btn = document.querySelector('.mobile-menu-btn');
+    const nav = document.querySelector('.nav-links');
+    if (nav?.classList.contains('active')) {
+        nav.classList.remove('active');
+        btn.setAttribute('aria-expanded', 'false');
+        btn.setAttribute('aria-label', 'Open navigation menu');
+        document.body.classList.remove('no-scroll');
+        const icon = btn.querySelector('i');
+        if (icon) icon.className = 'fas fa-bars';
     }
+}
+
+// Close modal when clicking outside
+window.onclick = (e) => {
+    if (e.target == document.getElementById("paymentModal")) closePaymentModal();
 }

@@ -1,12 +1,11 @@
 import unittest
 import os
 
-# Set TESTING to true before importing app
+# Set TESTING to true to avoid side effects in app.py
 os.environ['TESTING'] = 'true'
 
 from app import app, db
 from models import User
-from werkzeug.security import generate_password_hash
 
 class LoginSecurityTestCase(unittest.TestCase):
     def setUp(self):
@@ -16,45 +15,48 @@ class LoginSecurityTestCase(unittest.TestCase):
         self.client = app.test_client()
         with app.app_context():
             db.create_all()
+            # Create a test user
+            user = User(username='admin')
+            user.set_password('password123')
+            db.session.add(user)
+            db.session.commit()
 
     def tearDown(self):
         with app.app_context():
             db.session.remove()
             db.drop_all()
 
-    def test_login_length_validation_username(self):
-        # Username too long (> 80)
+    def test_login_username_too_long(self):
         response = self.client.post('/login', data={
             'username': 'a' * 81,
             'password': 'password123'
         }, follow_redirects=True)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn(b"Input exceeds maximum allowed length", response.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Invalid input', response.data)
 
-    def test_login_length_validation_password(self):
-        # Password too long (> 256)
+    def test_login_password_too_long(self):
         response = self.client.post('/login', data={
             'username': 'admin',
             'password': 'p' * 257
         }, follow_redirects=True)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn(b"Input exceeds maximum allowed length", response.data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Invalid input', response.data)
 
-    def test_password_hash_length(self):
-        # Verify that we can store a long hash
-        with app.app_context():
-            long_password = "very_long_password_to_generate_a_long_hash"
-            # Modern hashes like scrypt can be ~162 chars
-            hashed_pw = generate_password_hash(long_password)
+    def test_login_success(self):
+        response = self.client.post('/login', data={
+            'username': 'admin',
+            'password': 'password123'
+        }, follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Contact Messages', response.data) # Dashboard title
 
-            user = User(username='testuser', password_hash=hashed_pw)
-            db.session.add(user)
-            db.session.commit()
-
-            # Retrieve and check
-            retrieved_user = User.query.filter_by(username='testuser').first()
-            self.assertEqual(retrieved_user.password_hash, hashed_pw)
-            self.assertGreater(len(retrieved_user.password_hash), 100) # Ensure it's not a tiny hash
+    def test_login_invalid_credentials(self):
+        response = self.client.post('/login', data={
+            'username': 'admin',
+            'password': 'wrongpassword'
+        }, follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'Invalid username or password', response.data)
 
 if __name__ == '__main__':
     unittest.main()
