@@ -407,10 +407,21 @@ function payWithPaystack() {
     });
 }
 
-// Close modal when clicking outside
-window.onclick = function(event) {
-    const modal = document.getElementById("paymentModal");
-    if (event.target == modal) {
-        closePaymentModal();
+// Helper to close mobile menu
+function closeMobileMenu() {
+    const btn = document.querySelector('.mobile-menu-btn');
+    const nav = document.querySelector('.nav-links');
+    if (nav?.classList.contains('active')) {
+        nav.classList.remove('active');
+        btn.setAttribute('aria-expanded', 'false');
+        btn.setAttribute('aria-label', 'Open navigation menu');
+        document.body.classList.remove('no-scroll');
+        const icon = btn.querySelector('i');
+        if (icon) icon.className = 'fas fa-bars';
     }
+}
+
+// Close modal when clicking outside
+window.onclick = (e) => {
+    if (e.target == document.getElementById("paymentModal")) closePaymentModal();
 }
