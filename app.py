@@ -96,6 +96,17 @@ def login():
     if request.method == "POST":
         username = request.form.get("username")
         password = request.form.get("password")
+
+        # Security: Server-side input length validation to match database constraints
+        # and prevent resource exhaustion during hashing for extremely long passwords.
+        if not isinstance(username, str) or len(username) > 80:
+            flash("Invalid input")
+            return render_template("login.html")
+
+        if not isinstance(password, str) or len(password) > 256:
+            flash("Invalid input")
+            return render_template("login.html")
+
         user = User.query.filter_by(username=username).first()
         
         if user and user.check_password(password):
@@ -172,6 +183,10 @@ def initialize_payment():
     # Security: Validate types and presence of required fields
     if not isinstance(email, str) or not email.strip():
         return jsonify({"status": False, "message": "Valid email is required."}), 400
+
+    # Security: Server-side length validation to match Payment model
+    if len(email) > 120:
+        return jsonify({"status": False, "message": "Email exceeds maximum length."}), 400
     
     # Security: Hardcode amount server-side to prevent client-side manipulation
     # ₦5,000 = 500,000 Kobo
@@ -238,6 +253,10 @@ def verify_payment():
     # Optimization: Early return if reference is missing
     if not reference:
         return redirect(url_for('home'))
+
+    # Security: Validate reference format to prevent injection/SSRF
+    if not isinstance(reference, str) or not re.match(r'^[a-zA-Z0-9\-_]+$', reference):
+        return redirect(url_for('home'))
         
     payment = Payment.query.filter_by(reference=reference).first()
 
@@ -282,15 +301,15 @@ def verify_payment():
     return render_template("index.html", payment_status="failed")
 
 @app.after_request
-def add_security_and_compression_headers(response):
-    """Add security headers and Gzip compression to every response."""
+def apply_optimizations_and_security(response):
+    """Add security headers and apply Gzip compression where appropriate."""
+    # 1. Security Headers
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-Content-Type-Options'] = 'nosniff'
+    # Optimization: Use response.vary.add to safely append to Vary header
+    response.vary.add('Accept-Encoding')
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
-    # Security: HSTS (Strict-Transport-Security)
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-
-    # Content Security Policy: default-src 'self' allows only our own domain
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
         "script-src 'self'; "
@@ -303,42 +322,33 @@ def add_security_and_compression_headers(response):
         "form-action 'self';"
     )
 
-    # Optimization: Dynamic Gzip compression for text-based responses
-    # This reduces payload size by up to 70-80% for HTML, CSS, and JS
+    # 2. Dynamic Gzip Compression
+    # Performance: Reduce payload size for text-based responses
     accept_encoding = request.headers.get('Accept-Encoding', '').lower()
+    if (
+        'gzip' in accept_encoding and
+        response.status_code == 200 and
+        not response.direct_passthrough and
+        'Content-Encoding' not in response.headers and
+        (response.mimetype in [
+            'text/html', 'text/css', 'application/javascript',
+            'text/javascript', 'application/json', 'application/xml', 'text/xml'
+        ])
+    ):
+        response_data = response.get_data()
+        # Only compress if the response is of significant size
+        if len(response_data) > 500:
+            gzip_buffer = io.BytesIO()
+            with gzip.GzipFile(mode='wb', fileobj=gzip_buffer) as f:
+                f.write(response_data)
 
-    if (response.status_code < 200 or
-        response.status_code >= 300 or
-        response.direct_passthrough or
-        'gzip' not in accept_encoding or
-        'Content-Encoding' in response.headers):
-        return response
+            compressed_data = gzip_buffer.getvalue()
+            response.set_data(compressed_data)
+            response.headers['Content-Encoding'] = 'gzip'
+            response.headers['Content-Length'] = len(compressed_data)
 
-    content_type = response.mimetype
-    if content_type not in ['text/html', 'text/css', 'application/javascript', 'text/javascript', 'application/json']:
-        return response
-
-    # Capture data once to avoid redundant calls and handle potential streams safely
-    content = response.get_data()
-    if len(content) < 500: # Don't compress very small responses as it might increase size
-        return response
-
-    gzip_buffer = io.BytesIO()
-    with gzip.GzipFile(mode='wb', fileobj=gzip_buffer) as gzip_file:
-        gzip_file.write(content)
-
-    response.set_data(gzip_buffer.getvalue())
-    response.headers['Content-Encoding'] = 'gzip'
-    response.headers['Content-Length'] = len(response.get_data())
-
-    # Ensure proxies know that the content varies based on Accept-Encoding
-    vary = response.headers.get('Vary')
-    if vary:
-        if 'Accept-Encoding' not in vary:
-            response.headers['Vary'] = vary + ', Accept-Encoding'
-    else:
-        response.headers['Vary'] = 'Accept-Encoding'
-
+    # Ensure proxy caches vary by Accept-Encoding
+    response.vary.add('Accept-Encoding')
     return response
 
 if __name__ == "__main__":
