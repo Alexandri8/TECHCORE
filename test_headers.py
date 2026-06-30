@@ -25,5 +25,18 @@ class SecurityHeadersTestCase(unittest.TestCase):
         self.assertIn("base-uri 'self'", csp)
         self.assertIn("form-action 'self'", csp)
 
+    def test_admin_cache_control(self):
+        """Test that admin routes have strict cache control"""
+        # We need to be logged in to access /admin, but the header is added in after_request
+        # which runs even if the route returns 302 or 401/403.
+        response = self.client.get('/admin')
+        self.assertEqual(response.headers.get('Cache-Control'), 'no-store, no-cache, must-revalidate, max-age=0')
+        self.assertEqual(response.headers.get('Pragma'), 'no-cache')
+
+    def test_non_admin_cache_control(self):
+        """Test that non-admin routes do NOT have strict cache control by default"""
+        response = self.client.get('/')
+        self.assertNotEqual(response.headers.get('Cache-Control'), 'no-store, no-cache, must-revalidate, max-age=0')
+
 if __name__ == '__main__':
     unittest.main()

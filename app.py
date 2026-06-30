@@ -183,6 +183,10 @@ def initialize_payment():
     # Security: Validate types and presence of required fields
     if not isinstance(email, str) or not email.strip():
         return jsonify({"status": False, "message": "Valid email is required."}), 400
+
+    # Security: Server-side length validation to match Payment model
+    if len(email) > 120:
+        return jsonify({"status": False, "message": "Email exceeds maximum length."}), 400
     
     # Security: Hardcode amount server-side to prevent client-side manipulation
     # ₦5,000 = 500,000 Kobo
