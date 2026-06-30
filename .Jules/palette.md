@@ -14,6 +14,6 @@
 **Learning:** For textareas with character limits, linking the counter via `aria-describedby` provides a non-intrusive way for screen reader users to discover the limit. Furthermore, providing multi-stage visual feedback (e.g., warning at 90%, danger at 98%) helps users anticipate the limit without needing to constantly check the number.
 **Action:** Always link character counters to their inputs via ARIA and implement progressive visual cues for inputs with length constraints.
 
-## 2026-06-29 - [Compact UX Implementation under Constraints]
-**Learning:** When faced with strict line-count constraints for UX improvements (e.g., <50 lines), accessibility and robustness can be maintained by using compact JS patterns (arrow functions, optional chaining, consolidated state handlers) and shorthand CSS. A functional mobile menu with ARIA support and scroll locking can be achieved in ~20 lines of total code change.
-**Action:** Prioritize consolidated toggle functions and shorthand properties (like `inset: 0`) to maximize feature density without sacrificing readability or a11y.
+## 2026-06-20 - [Efficient Backdrop Click and Scroll Management for Overlays]
+**Learning:** For full-screen overlays (using `inset: 0`), an efficient way to implement "click-to-close" on the backdrop is to check if the click target is the overlay container itself (`e.target === element`). Additionally, locking the body scroll (`overflow: hidden`) is essential on mobile to prevent disorienting background movement while the menu is active.
+**Action:** Use `e.target === container` for backdrop clicks on `inset: 0` elements and always toggle a `no-scroll` class on the body when opening full-screen modals or menus.
