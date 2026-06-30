@@ -5,6 +5,8 @@ from flask_wtf.csrf import CSRFProtect
 import os
 import requests
 import uuid
+import gzip
+import io
 from sqlalchemy import event
 from dotenv import load_dotenv
 
@@ -278,6 +280,54 @@ def verify_payment():
         payment.status = "failed"
         db.session.commit()
     return render_template("index.html", payment_status="failed")
+
+@app.after_request
+def compress_response(response):
+    """Apply dynamic Gzip compression to applicable responses to reduce payload size."""
+    # Optimization: Only compress if client supports it and response is not already compressed
+    accept_encoding = request.headers.get('Accept-Encoding', '').lower()
+    if 'gzip' not in accept_encoding or response.headers.get('Content-Encoding'):
+        return response
+
+    # Optimization: Skip compression if direct_passthrough is true (e.g. static files in some configs)
+    if response.direct_passthrough:
+        return response
+
+    # Optimization: Only compress common text-based formats and SVG
+    mimetype = response.mimetype
+    compressible_types = [
+        'text/html', 'text/css', 'application/javascript',
+        'text/javascript', 'application/json', 'image/svg+xml'
+    ]
+    if mimetype not in compressible_types:
+        return response
+
+    # Optimization: Only compress successful responses (200 OK)
+    if response.status_code != 200:
+        return response
+
+    # Optimization: Only compress if the response size exceeds a reasonable threshold (500 bytes)
+    content = response.get_data()
+    if len(content) < 500:
+        return response
+
+    # Apply Gzip compression
+    gzip_buffer = io.BytesIO()
+    # Use distinct names for buffer and GzipFile object to avoid shadowing
+    with gzip.GzipFile(mode='wb', fileobj=gzip_buffer) as f:
+        f.write(content)
+
+    compressed_data = gzip_buffer.getvalue()
+    response.set_data(compressed_data)
+
+    # Update headers
+    response.headers['Content-Encoding'] = 'gzip'
+    response.headers['Content-Length'] = len(compressed_data)
+
+    # Optimization: Use response.vary.add to safely append Accept-Encoding for proper caching
+    response.vary.add('Accept-Encoding')
+
+    return response
 
 @app.after_request
 def add_security_headers(response):
