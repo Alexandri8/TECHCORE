@@ -787,6 +787,10 @@ textarea:focus-visible {
     display: block;
 }
 
+.no-scroll {
+    overflow: hidden !important;
+}
+
 /* ================== Footer ================== */
 .footer {
     border-top: 1px solid var(--border-color);
@@ -931,22 +935,38 @@ textarea:focus-visible {
 
     .nav-links.active {
         display: flex;
+        animation: fadeIn 0.3s ease-out;
     }
 
-    .nav-links a {
-        font-size: 1.5rem !important;
-        font-weight: 600;
+    .nav-links a:not(.btn) {
+        font-size: 1.5rem;
+        font-weight: 700;
     }
 
-    .nav-links a.btn {
+    .nav-links .nav-btn {
         width: 80%;
+        max-width: 300px;
+        padding: 1.2rem;
+        font-size: 1.1rem;
     }
 
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    /* Mobile menu logic via JS */
     .mobile-menu-btn {
         display: block;
         position: relative;
         z-index: 2000;
+        padding: 0.5rem;
     }
+    .nav-links.active { display: flex; animation: fadeInOverlay 0.3s ease; }
+    .nav-links a:not(.btn) { font-size: 1.5rem; font-weight: 600; }
+    .nav-links .nav-btn { width: 80%; max-width: 300px; }
+    @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
+    .mobile-menu-btn { display: block; position: relative; z-index: 1001; }
 
     .stats-row {
         flex-direction: column;
@@ -999,6 +1019,10 @@ textarea:focus-visible {
 
 .close-modal:hover {
     color: white;
+}
+
+.no-scroll {
+    overflow: hidden;
 }
 
 .w-100 {
