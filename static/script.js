@@ -66,13 +66,16 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Modal Keyboard Accessibility
+    // Global Keyboard Listeners (Escape key for dismissible UI)
     document.addEventListener("keydown", (event) => {
         if (event.key === "Escape") {
+            // 1. Close payment modal if open
             const modal = document.getElementById("paymentModal");
             if (modal && (modal.style.display === "block" || modal.classList.contains('show'))) {
                 closePaymentModal();
             }
+            // 2. Close mobile menu if open
+            closeMobileMenu();
         }
     });
 
@@ -100,6 +103,22 @@ document.addEventListener("DOMContentLoaded", () => {
         openPaymentBtn.addEventListener("click", openPaymentModal);
     }
 
+    const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
+    const navLinks = document.getElementById("navLinks");
+    if (mobileMenuBtn && navLinks) {
+        mobileMenuBtn.addEventListener("click", () => {
+            const isActive = navLinks.classList.toggle("active");
+            document.body.classList.toggle("no-scroll", isActive);
+            mobileMenuBtn.setAttribute("aria-expanded", isActive);
+
+            // Swap icon
+            const icon = mobileMenuBtn.querySelector("i");
+            if (icon) {
+                icon.className = isActive ? "fas fa-times" : "fas fa-bars";
+            }
+        });
+    }
+
     const closePaymentBtn = document.getElementById("closePaymentBtn");
     if (closePaymentBtn) {
         closePaymentBtn.addEventListener("click", closePaymentModal);
@@ -108,6 +127,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const payBtn = document.getElementById("payBtn");
     if (payBtn) {
         payBtn.addEventListener("click", payWithPaystack);
+    }
+
+    // Auto-close mobile menu on link click or backdrop click
+    if (navLinks) {
+        navLinks.addEventListener("click", (e) => {
+            // Close if a link is clicked OR if the backdrop itself is clicked
+            if (e.target.closest('a') || e.target === navLinks) {
+                closeMobileMenu();
+            }
+        });
     }
 
     // 4. Handle Server-side Payment Notifications
@@ -119,10 +148,27 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
+// Helper to close mobile menu
+function closeMobileMenu() {
+    const navLinks = document.getElementById("navLinks");
+    const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
+    if (navLinks && navLinks.classList.contains("active")) {
+        navLinks.classList.remove("active");
+        document.body.classList.remove("no-scroll");
+        if (mobileMenuBtn) {
+            mobileMenuBtn.setAttribute("aria-expanded", "false");
+            const icon = mobileMenuBtn.querySelector("i");
+            if (icon) icon.className = "fas fa-bars";
+        }
+    }
+}
+
 // 4. Notification System
 function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
+    notification.setAttribute('role', 'status');
+    notification.setAttribute('aria-live', 'polite');
     notification.innerText = message;
     document.body.appendChild(notification);
 
