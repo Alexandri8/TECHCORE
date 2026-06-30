@@ -18,7 +18,7 @@
 **Learning:** Flask's `request.json` can return various Python types depending on the `Content-Type: application/json` payload. Accessing dictionary methods like `.get()` on a list causes an `AttributeError`.
 **Prevention:** Always verify that `request.json` is a dictionary using `isinstance(data, dict)` and validate that required fields are of the expected type (e.g., `isinstance(val, str)`) before processing.
 
-## 2026-06-21 - Insecure Rate Limiting and Log Injection Risks
-**Vulnerability:** Attempting to mitigate brute-force attacks using `time.sleep()` in synchronous Flask workers introduces a Denial of Service (DoS) vector. Additionally, logging unsanitized usernames allows for Log Injection.
-**Learning:** Security fixes must not introduce new availability risks. Blocking synchronous workers ties up server resources, making it easy for an attacker to exhaust the thread pool. User input must also be sanitized before logging to prevent forging or corrupting log data.
-**Prevention:** Avoid `time.sleep()` for rate limiting in synchronous environments; use dedicated tools like Flask-Limiter. Always sanitize user-controlled strings using a whitelist approach (e.g., `re.sub(r'[^a-zA-Z0-9_@-]', '', val)`) before logging.
+## 2026-06-28 - Resource Exhaustion via Unbounded Authentication Inputs
+**Vulnerability:** The login endpoint lacked length validation on username and password fields, potentially allowing a Denial of Service (DoS) attack by submitting extremely large strings to the password hashing function (scrypt), which is computationally expensive.
+**Learning:** Authentication endpoints are primary targets for DoS. Hashing algorithms are designed to be slow, so providing them with very large inputs can disproportionately consume CPU resources and exhaust server workers.
+**Prevention:** Enforce strict server-side length limits on all authentication inputs (e.g., 80 chars for username, 256 for password) before processing or hashing. Ensure database column lengths are sufficient to store the resulting hashes without truncation.

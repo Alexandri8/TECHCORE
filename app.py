@@ -5,8 +5,8 @@ from flask_wtf.csrf import CSRFProtect
 import os
 import requests
 import uuid
-import time
-import re
+import gzip
+import io
 from sqlalchemy import event
 from dotenv import load_dotenv
 
@@ -101,9 +101,14 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
 
-        # Security: Input length validation to prevent DoS during hashing
-        if not username or not password or len(username) > 80 or len(password) > 256:
-            flash("Invalid username or password")
+        # Security: Server-side input length validation to match database constraints
+        # and prevent resource exhaustion during hashing for extremely long passwords.
+        if not isinstance(username, str) or len(username) > 80:
+            flash("Invalid input")
+            return render_template("login.html")
+
+        if not isinstance(password, str) or len(password) > 256:
+            flash("Invalid input")
             return render_template("login.html")
 
         user = User.query.filter_by(username=username).first()
@@ -185,6 +190,10 @@ def initialize_payment():
     # Security: Validate types and presence of required fields
     if not isinstance(email, str) or not email.strip():
         return jsonify({"status": False, "message": "Valid email is required."}), 400
+
+    # Security: Server-side length validation to match Payment model
+    if len(email) > 120:
+        return jsonify({"status": False, "message": "Email exceeds maximum length."}), 400
     
     # Security: Hardcode amount server-side to prevent client-side manipulation
     # ₦5,000 = 500,000 Kobo
@@ -251,6 +260,10 @@ def verify_payment():
     # Optimization: Early return if reference is missing
     if not reference:
         return redirect(url_for('home'))
+
+    # Security: Validate reference format to prevent injection/SSRF
+    if not isinstance(reference, str) or not re.match(r'^[a-zA-Z0-9\-_]+$', reference):
+        return redirect(url_for('home'))
         
     payment = Payment.query.filter_by(reference=reference).first()
 
@@ -295,17 +308,15 @@ def verify_payment():
     return render_template("index.html", payment_status="failed")
 
 @app.after_request
-def add_security_headers(response):
-    """Add security headers to every response."""
+def apply_optimizations_and_security(response):
+    """Add security headers and apply Gzip compression where appropriate."""
+    # 1. Security Headers
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-Content-Type-Options'] = 'nosniff'
+    # Optimization: Use response.vary.add to safely append to Vary header
+    response.vary.add('Accept-Encoding')
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
-    # Security: HSTS (Strict-Transport-Security)
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-
-    # Content Security Policy: default-src 'self' allows only our own domain
-    # style-src and font-src allow external resources from trusted domains (Google Fonts, Font Awesome)
-    # frame-ancestors 'none' prevents the site from being embedded in iframes
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
         "script-src 'self'; "
@@ -317,6 +328,34 @@ def add_security_headers(response):
         "base-uri 'self'; "
         "form-action 'self';"
     )
+
+    # 2. Dynamic Gzip Compression
+    # Performance: Reduce payload size for text-based responses
+    accept_encoding = request.headers.get('Accept-Encoding', '').lower()
+    if (
+        'gzip' in accept_encoding and
+        response.status_code == 200 and
+        not response.direct_passthrough and
+        'Content-Encoding' not in response.headers and
+        (response.mimetype in [
+            'text/html', 'text/css', 'application/javascript',
+            'text/javascript', 'application/json', 'application/xml', 'text/xml'
+        ])
+    ):
+        response_data = response.get_data()
+        # Only compress if the response is of significant size
+        if len(response_data) > 500:
+            gzip_buffer = io.BytesIO()
+            with gzip.GzipFile(mode='wb', fileobj=gzip_buffer) as f:
+                f.write(response_data)
+
+            compressed_data = gzip_buffer.getvalue()
+            response.set_data(compressed_data)
+            response.headers['Content-Encoding'] = 'gzip'
+            response.headers['Content-Length'] = len(compressed_data)
+
+    # Ensure proxy caches vary by Accept-Encoding
+    response.vary.add('Accept-Encoding')
     return response
 
 if __name__ == "__main__":
