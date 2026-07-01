@@ -22,3 +22,8 @@
 **Vulnerability:** The login endpoint lacked length validation on username and password fields, potentially allowing a Denial of Service (DoS) attack by submitting extremely large strings to the password hashing function (scrypt), which is computationally expensive.
 **Learning:** Authentication endpoints are primary targets for DoS. Hashing algorithms are designed to be slow, so providing them with very large inputs can disproportionately consume CPU resources and exhaust server workers.
 **Prevention:** Enforce strict server-side length limits on all authentication inputs (e.g., 80 chars for username, 256 for password) before processing or hashing. Ensure database column lengths are sufficient to store the resulting hashes without truncation.
+
+## 2026-07-01 - Runtime Failures in Security-Critical Code Paths due to Missing Imports
+**Vulnerability:** Security-critical code paths for log sanitization and input validation (SSRF/Path Traversal prevention) were non-functional and caused application crashes because the `re` module was not imported.
+**Learning:** Code-level security measures like regex validation are only effective if they execute correctly. An unhandled exception in a security check can lead to a Denial of Service or bypass of intended protections.
+**Prevention:** Always verify security-critical code paths with automated tests that trigger the relevant logic (e.g., failed logins or malformed inputs). Ensure all modules used in security handlers are correctly imported.
