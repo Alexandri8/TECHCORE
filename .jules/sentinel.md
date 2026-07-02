@@ -22,3 +22,8 @@
 **Vulnerability:** The login endpoint lacked length validation on username and password fields, potentially allowing a Denial of Service (DoS) attack by submitting extremely large strings to the password hashing function (scrypt), which is computationally expensive.
 **Learning:** Authentication endpoints are primary targets for DoS. Hashing algorithms are designed to be slow, so providing them with very large inputs can disproportionately consume CPU resources and exhaust server workers.
 **Prevention:** Enforce strict server-side length limits on all authentication inputs (e.g., 80 chars for username, 256 for password) before processing or hashing. Ensure database column lengths are sufficient to store the resulting hashes without truncation.
+
+## 2026-07-02 - Missing Dependencies in Critical Security Paths
+**Vulnerability:** The `re` module was used in the `/login` and `/verify-payment` routes for sanitization and validation but was not imported, leading to a `NameError` and application crash when these security features were triggered.
+**Learning:** Security logic (like log sanitization or input validation via regex) is often in rarely-triggered paths. A missing import can effectively disable these protections or cause a DoS when an attack is attempted.
+**Prevention:** Always verify security paths with automated tests that specifically trigger the validation/sanitization logic to ensure all dependencies are present and functional.
