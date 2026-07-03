@@ -1,5 +1,6 @@
 import os
 os.environ['TESTING'] = 'true'
+os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
 import unittest
 from app import app, db
 from models import Payment
