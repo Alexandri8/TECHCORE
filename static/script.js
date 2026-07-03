@@ -48,6 +48,32 @@ document.addEventListener("DOMContentLoaded", () => {
 
     animateElements.forEach(el => observer.observe(el));
 
+    // ScrollSpy: Highlight active section in nav
+    const sections = document.querySelectorAll('section[id]');
+    const navLinksList = document.querySelectorAll('.nav-links a:not(.btn)');
+
+    const scrollSpyObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.id;
+                navLinksList.forEach(link => {
+                    const isActive = link.getAttribute('href') === `#${id}`;
+                    link.classList.toggle('active', isActive);
+                    if (isActive) {
+                        link.setAttribute('aria-current', 'location');
+                    } else if (link.getAttribute('aria-current') === 'location') {
+                        link.removeAttribute('aria-current');
+                    }
+                });
+            }
+        });
+    }, {
+        rootMargin: '-20% 0px -70% 0px',
+        threshold: 0
+    });
+
+    sections.forEach(section => scrollSpyObserver.observe(section));
+
     // Character Counter for Contact Form
     const messageInput = document.getElementById("message");
     const charCounter = document.getElementById("charCounter");

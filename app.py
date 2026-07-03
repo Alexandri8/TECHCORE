@@ -3,6 +3,7 @@ from models import db, ContactMessage, User, Payment
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_wtf.csrf import CSRFProtect
 import os
+import re
 import requests
 import uuid
 import gzip
