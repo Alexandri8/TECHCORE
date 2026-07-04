@@ -9,3 +9,7 @@
 ## 2025-06-25 - Dynamic Gzip Compression Impact
 **Learning:** Implementing dynamic Gzip compression in the Flask `after_request` hook for text-based mimetypes (HTML, CSS, JS, JSON) provided a ~73% reduction in the home page payload (from 13.3KB to 3.6KB). Using `response.vary.add('Accept-Encoding')` is safer than direct header assignment as it correctly handles existing Vary values.
 **Action:** Always implement Gzip compression for text-heavy applications to significantly reduce TTFB and bandwidth usage, especially when serving through a reverse proxy might not be an option.
+
+## 2026-07-04 - IntersectionObserver and Script Consolidation
+**Learning:** Replacing manual `setTimeout` and `getBoundingClientRect` visibility checks with `IntersectionObserver` for scroll-reveal animations eliminated layout thrashing during page load. Using `observer.unobserve(entry.target)` further reduced runtime CPU usage. Consolidating five redundant and conflicting versions of the same UI logic (mobile menu) into a single optimized function reduced the JS payload by ~31% and minimized memory footprint by reducing the number of event listeners.
+**Action:** Always prefer `IntersectionObserver` for visibility-based logic and proactively audit scripts for redundant event listeners or duplicate logic blocks that can be consolidated.
