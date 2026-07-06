@@ -22,3 +22,8 @@
 **Vulnerability:** The login endpoint lacked length validation on username and password fields, potentially allowing a Denial of Service (DoS) attack by submitting extremely large strings to the password hashing function (scrypt), which is computationally expensive.
 **Learning:** Authentication endpoints are primary targets for DoS. Hashing algorithms are designed to be slow, so providing them with very large inputs can disproportionately consume CPU resources and exhaust server workers.
 **Prevention:** Enforce strict server-side length limits on all authentication inputs (e.g., 80 chars for username, 256 for password) before processing or hashing. Ensure database column lengths are sufficient to store the resulting hashes without truncation.
+
+## 2026-07-06 - Critical NameError in Security-Critical Code Paths
+**Vulnerability:** The application crashed with a `NameError` when attempting to log failed login attempts or verify payments because the `re` module was used but not imported.
+**Learning:** Security-critical paths (like logging, input sanitization, and payment verification) must be thoroughly tested. A crash in these paths can lead to a Denial of Service or bypass of security controls if exceptions are not handled globally.
+**Prevention:** Always ensure all modules are imported at the top of the file. Use automated linting and comprehensive unit tests that cover error handling and security logging paths to catch missing imports before deployment.
