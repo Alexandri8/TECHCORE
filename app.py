@@ -7,6 +7,7 @@ import requests
 import uuid
 import gzip
 import io
+import re
 from sqlalchemy import event
 from dotenv import load_dotenv
 
@@ -105,11 +106,11 @@ def login():
         # and prevent resource exhaustion during hashing for extremely long passwords.
         if not isinstance(username, str) or len(username) > 80:
             flash("Invalid input")
-            return render_template("login.html")
+            return render_template("login.html"), 400
 
         if not isinstance(password, str) or len(password) > 256:
             flash("Invalid input")
-            return render_template("login.html")
+            return render_template("login.html"), 400
 
         user = User.query.filter_by(username=username).first()
         
@@ -313,6 +314,8 @@ def apply_optimizations_and_security(response):
     # 1. Security Headers
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-Content-Type-Options'] = 'nosniff'
+    # Security: Restrict access to sensitive browser features
+    response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
     # Optimization: Use response.vary.add to safely append to Vary header
     response.vary.add('Accept-Encoding')
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
@@ -353,6 +356,12 @@ def apply_optimizations_and_security(response):
             response.set_data(compressed_data)
             response.headers['Content-Encoding'] = 'gzip'
             response.headers['Content-Length'] = len(compressed_data)
+
+    # 3. Path-specific Headers
+    # Security: Prevent caching of sensitive admin dashboard data
+    if request.path.startswith('/admin'):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
 
     # Ensure proxy caches vary by Accept-Encoding
     response.vary.add('Accept-Encoding')
