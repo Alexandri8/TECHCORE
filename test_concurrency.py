@@ -27,9 +27,20 @@ def writer():
         time.sleep(0.1)
     conn.close()
 
-# Ensure WAL mode is set
+# Ensure directory exists and WAL mode is set
+os.makedirs(os.path.dirname(db_path), exist_ok=True)
 conn = sqlite3.connect(db_path)
 conn.execute("PRAGMA journal_mode=WAL;")
+conn.execute("""
+    CREATE TABLE IF NOT EXISTS payment (
+        id INTEGER PRIMARY KEY,
+        email TEXT NOT NULL,
+        amount REAL NOT NULL,
+        reference TEXT NOT NULL UNIQUE,
+        status TEXT DEFAULT 'pending',
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+""")
 conn.close()
 
 t1 = threading.Thread(target=reader)
