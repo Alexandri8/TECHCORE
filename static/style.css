@@ -242,7 +242,7 @@ a {
     font-size: 0.95rem;
 }
 
-.nav-links a:not(.btn):hover {
+.nav-links a:not(.btn):hover, .nav-links a:not(.btn).active {
     color: var(--accent-primary);
 }
 
