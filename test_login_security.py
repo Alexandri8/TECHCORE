@@ -31,15 +31,16 @@ class LoginSecurityTestCase(unittest.TestCase):
             'username': 'a' * 81,
             'password': 'password123'
         }, follow_redirects=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 400)
         self.assertIn(b'Invalid input', response.data)
 
     def test_login_password_too_long(self):
+        # Even with follow_redirects=True, it should not redirect but return 400
         response = self.client.post('/login', data={
             'username': 'admin',
             'password': 'p' * 257
         }, follow_redirects=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 400)
         self.assertIn(b'Invalid input', response.data)
 
     def test_login_success(self):
