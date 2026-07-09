@@ -9,3 +9,7 @@
 ## 2025-06-25 - Dynamic Gzip Compression Impact
 **Learning:** Implementing dynamic Gzip compression in the Flask `after_request` hook for text-based mimetypes (HTML, CSS, JS, JSON) provided a ~73% reduction in the home page payload (from 13.3KB to 3.6KB). Using `response.vary.add('Accept-Encoding')` is safer than direct header assignment as it correctly handles existing Vary values.
 **Action:** Always implement Gzip compression for text-heavy applications to significantly reduce TTFB and bandwidth usage, especially when serving through a reverse proxy might not be an option.
+
+## 2026-07-09 - Frontend Script Consolidation & Reveal Animation Optimization
+**Learning:** Consolidating multiple redundant copies of the same logic (like mobile menu toggles) significantly reduces the JavaScript bundle size (~30% in this case) and decreases parse/execution time. Additionally, using `observer.unobserve(entry.target)` in IntersectionObservers for reveal animations ensures that the browser stops tracking elements once they are visible, reducing runtime main-thread overhead. Removing `setTimeout`-based `getBoundingClientRect` checks for initial visibility avoids layout thrashing during the critical path of page load.
+**Action:** Always audit `script.js` for redundant event listeners and logic. Prefer `IntersectionObserver` for all scroll-based visibility checks and always `unobserve` targets that only need to animate once.

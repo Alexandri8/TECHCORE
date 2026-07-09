@@ -5,6 +5,7 @@ from flask_wtf.csrf import CSRFProtect
 import os
 import requests
 import uuid
+import re
 import gzip
 import io
 from sqlalchemy import event
@@ -105,11 +106,11 @@ def login():
         # and prevent resource exhaustion during hashing for extremely long passwords.
         if not isinstance(username, str) or len(username) > 80:
             flash("Invalid input")
-            return render_template("login.html")
+            return render_template("login.html"), 400
 
         if not isinstance(password, str) or len(password) > 256:
             flash("Invalid input")
-            return render_template("login.html")
+            return render_template("login.html"), 400
 
         user = User.query.filter_by(username=username).first()
         
@@ -144,7 +145,9 @@ def admin():
     payments = Payment.query.order_by(Payment.timestamp.desc()).paginate(
         page=payment_page, per_page=per_page, error_out=False
     )
-    return render_template("admin.html", messages=messages, payments=payments)
+    from flask import make_response
+    response = make_response(render_template("admin.html", messages=messages, payments=payments))
+    return response
 
 @app.route("/contact", methods=["POST"])
 def contact():
@@ -313,8 +316,7 @@ def apply_optimizations_and_security(response):
     # 1. Security Headers
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-Content-Type-Options'] = 'nosniff'
-    # Optimization: Use response.vary.add to safely append to Vary header
-    response.vary.add('Accept-Encoding')
+    response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
     response.headers['Content-Security-Policy'] = (
@@ -356,6 +358,12 @@ def apply_optimizations_and_security(response):
 
     # Ensure proxy caches vary by Accept-Encoding
     response.vary.add('Accept-Encoding')
+
+    # Security: Prevent browsers from caching sensitive dashboard content
+    if request.path == '/admin':
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+
     return response
 
 if __name__ == "__main__":
