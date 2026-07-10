@@ -48,6 +48,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
     animateElements.forEach(el => observer.observe(el));
 
+    // ScrollSpy Implementation
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-links a:not(.btn)');
+
+    const scrollSpyObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.getAttribute('id');
+                navLinks.forEach(link => {
+                    link.classList.toggle('active', link.getAttribute('href') === `#${id}`);
+                });
+            }
+        });
+    }, {
+        rootMargin: '-20% 0px -70% 0px'
+    });
+
+    sections.forEach(section => scrollSpyObserver.observe(section));
+
     // Character Counter for Contact Form
     const messageInput = document.getElementById("message");
     const charCounter = document.getElementById("charCounter");
@@ -72,6 +91,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const active = s ?? !nav.classList.contains('active');
         nav.classList.toggle('active', active); document.body.classList.toggle('no-scroll', active);
         mobileBtn.setAttribute('aria-expanded', active);
+        mobileBtn.setAttribute('aria-label', active ? 'Close navigation menu' : 'Open navigation menu');
         if (icon) { icon.classList.toggle('fa-bars', !active); icon.classList.toggle('fa-times', active); }
     };
     mobileBtn?.addEventListener('click', () => toggleMenu());
@@ -109,119 +129,14 @@ document.addEventListener("DOMContentLoaded", () => {
         openPaymentBtn.addEventListener("click", openPaymentModal);
     }
 
-    const mobileMenuBtn = document.querySelector(".mobile-menu-btn");
-    const navLinks = document.querySelector(".nav-links");
-    if (mobileMenuBtn && navLinks) {
-        mobileMenuBtn.addEventListener("click", () => {
-            const isActive = navLinks.classList.toggle("active");
-            document.body.classList.toggle("no-scroll");
-            mobileMenuBtn.setAttribute("aria-expanded", isActive);
-            const icon = mobileMenuBtn.querySelector("i");
-            if (icon) {
-                icon.className = isActive ? "fas fa-times" : "fas fa-bars";
-            }
-        });
-
-        // Close menu when a link is clicked
-        navLinks.querySelectorAll("a").forEach(link => {
-            link.addEventListener("click", () => {
-                navLinks.classList.remove("active");
-                document.body.classList.remove("no-scroll");
-                mobileMenuBtn.setAttribute("aria-expanded", "false");
-                const icon = mobileMenuBtn.querySelector("i");
-                if (icon) icon.className = "fas fa-bars";
-            });
-        });
-    }
-
     const closePaymentBtn = document.getElementById("closePaymentBtn");
     if (closePaymentBtn) {
         closePaymentBtn.addEventListener("click", closePaymentModal);
     }
 
-    // Mobile Menu Toggle logic
-    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-    const navLinks = document.querySelector('.nav-links');
-
-    const toggleMobileMenu = () => {
-        const isOpen = navLinks.classList.toggle('active');
-        document.body.classList.toggle('no-scroll');
-
-        // Update ARIA
-        mobileMenuBtn.setAttribute('aria-expanded', isOpen);
-
-        // Swap Icon
-        const icon = mobileMenuBtn.querySelector('i');
-        if (isOpen) {
-            icon.classList.replace('fa-bars', 'fa-xmark');
-        } else {
-            icon.classList.replace('fa-xmark', 'fa-bars');
-        }
-    };
-
-    if (mobileMenuBtn && navLinks) {
-        mobileMenuBtn.addEventListener('click', toggleMobileMenu);
-
-        // Close menu on link click
-        navLinks.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                if (navLinks.classList.contains('active')) toggleMobileMenu();
-            });
-        });
-
-        // Close on backdrop click
-        navLinks.addEventListener('click', (e) => {
-            if (e.target === navLinks) {
-                toggleMobileMenu();
-            }
-        });
-    }
-
     const payBtn = document.getElementById("payBtn");
     if (payBtn) {
         payBtn.addEventListener("click", payWithPaystack);
-    }
-
-    // Mobile Menu Toggle logic
-    const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
-    const navLinks = document.querySelector('.nav-links');
-    const menuIcon = mobileMenuBtn ? mobileMenuBtn.querySelector('i') : null;
-
-    if (mobileMenuBtn && navLinks) {
-        mobileMenuBtn.addEventListener('click', () => {
-            const isExpanded = mobileMenuBtn.getAttribute('aria-expanded') === 'true';
-            navLinks.classList.toggle('active');
-            document.body.classList.toggle('no-scroll');
-            mobileMenuBtn.setAttribute('aria-expanded', !isExpanded);
-            if (menuIcon) {
-                menuIcon.classList.toggle('fa-bars');
-                menuIcon.classList.toggle('fa-times');
-            }
-        });
-
-        navLinks.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', () => {
-                navLinks.classList.remove('active');
-                document.body.classList.remove('no-scroll');
-                mobileMenuBtn.setAttribute('aria-expanded', 'false');
-                if (menuIcon) {
-                    menuIcon.classList.add('fa-bars');
-                    menuIcon.classList.remove('fa-times');
-                }
-            });
-        });
-
-        navLinks.addEventListener('click', (e) => {
-            if (e.target === navLinks) {
-                navLinks.classList.remove('active');
-                document.body.classList.remove('no-scroll');
-                mobileMenuBtn.setAttribute('aria-expanded', 'false');
-                if (menuIcon) {
-                    menuIcon.classList.add('fa-bars');
-                    menuIcon.classList.remove('fa-times');
-                }
-            }
-        });
     }
 
     // 4. Handle Server-side Payment Notifications

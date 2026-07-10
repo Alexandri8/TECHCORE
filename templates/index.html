@@ -225,13 +225,13 @@
                         <textarea id="message" name="message" rows="5" required maxlength="1000"
                             placeholder="Detail your technical requirements or questions here..."
                             aria-describedby="charCounter"></textarea>
-                        <div id="charCounter" class="text-sm text-muted mt-xs text-right" style="font-family: var(--font-mono);">0 / 1000</div>
+                        <div id="charCounter" class="text-sm text-muted mt-xs text-right" style="font-family: var(--font-mono);" aria-live="polite">0 / 1000</div>
                     </div>
                     <button type="submit" class="btn btn-primary submit-btn" id="submitBtn">
                         <span>Transmit Message</span>
                         <i class="fas fa-paper-plane"></i>
                     </button>
-                    <div id="response" class="form-response" aria-live="polite"></div>
+                    <div id="response" class="form-response" aria-live="assertive"></div>
                 </form>
             </div>
         </div>
