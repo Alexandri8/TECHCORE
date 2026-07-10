@@ -40,6 +40,7 @@
 
 html {
     scroll-behavior: smooth;
+    scroll-padding-top: 5.5rem;
 }
 
 body {
@@ -242,7 +243,8 @@ a {
     font-size: 0.95rem;
 }
 
-.nav-links a:not(.btn):hover {
+.nav-links a:not(.btn):hover,
+.nav-links a:not(.btn).active {
     color: var(--accent-primary);
 }
 
@@ -956,17 +958,11 @@ textarea:focus-visible {
     }
 
     /* Mobile menu logic via JS */
-    .mobile-menu-btn {
-        display: block;
-        position: relative;
-        z-index: 2000;
-        padding: 0.5rem;
-    }
-    .nav-links.active { display: flex; animation: fadeInOverlay 0.3s ease; }
+    .nav-links.active { display: flex; animation: fadeInOverlay 0.3s ease; z-index: 999; }
     .nav-links a:not(.btn) { font-size: 1.5rem; font-weight: 600; }
     .nav-links .nav-btn { width: 80%; max-width: 300px; }
     @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
-    .mobile-menu-btn { display: block; position: relative; z-index: 1001; }
+    .mobile-menu-btn { display: block; position: relative; z-index: 1001; padding: 0.5rem; }
 
     .stats-row {
         flex-direction: column;
