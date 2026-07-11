@@ -7,6 +7,7 @@ import requests
 import uuid
 import gzip
 import io
+import re
 from sqlalchemy import event
 from dotenv import load_dotenv
 
@@ -105,11 +106,11 @@ def login():
         # and prevent resource exhaustion during hashing for extremely long passwords.
         if not isinstance(username, str) or len(username) > 80:
             flash("Invalid input")
-            return render_template("login.html")
+            return render_template("login.html"), 400
 
         if not isinstance(password, str) or len(password) > 256:
             flash("Invalid input")
-            return render_template("login.html")
+            return render_template("login.html"), 400
 
         user = User.query.filter_by(username=username).first()
         
@@ -317,6 +318,7 @@ def apply_optimizations_and_security(response):
     response.vary.add('Accept-Encoding')
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
         "script-src 'self'; "
@@ -329,33 +331,40 @@ def apply_optimizations_and_security(response):
         "form-action 'self';"
     )
 
+    # Security: Strict cache control for admin and login routes
+    if request.path.startswith('/admin') or request.path.startswith('/login'):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+
     # 2. Dynamic Gzip Compression
     # Performance: Reduce payload size for text-based responses
-    accept_encoding = request.headers.get('Accept-Encoding', '').lower()
-    if (
-        'gzip' in accept_encoding and
-        response.status_code == 200 and
-        not response.direct_passthrough and
-        'Content-Encoding' not in response.headers and
-        (response.mimetype in [
-            'text/html', 'text/css', 'application/javascript',
-            'text/javascript', 'application/json', 'application/xml', 'text/xml'
-        ])
-    ):
-        response_data = response.get_data()
-        # Only compress if the response is of significant size
-        if len(response_data) > 500:
-            gzip_buffer = io.BytesIO()
-            with gzip.GzipFile(mode='wb', fileobj=gzip_buffer) as f:
-                f.write(response_data)
+    compressible_mimetypes = [
+        'text/html', 'text/css', 'application/javascript',
+        'text/javascript', 'application/json', 'application/xml', 'text/xml'
+    ]
 
-            compressed_data = gzip_buffer.getvalue()
-            response.set_data(compressed_data)
-            response.headers['Content-Encoding'] = 'gzip'
-            response.headers['Content-Length'] = len(compressed_data)
+    if response.mimetype in compressible_mimetypes:
+        # Optimization: Allow Gzip for static files by disabling direct_passthrough
+        response.direct_passthrough = False
 
-    # Ensure proxy caches vary by Accept-Encoding
-    response.vary.add('Accept-Encoding')
+        accept_encoding = request.headers.get('Accept-Encoding', '').lower()
+        if (
+            'gzip' in accept_encoding and
+            response.status_code == 200 and
+            'Content-Encoding' not in response.headers
+        ):
+            response_data = response.get_data()
+            # Only compress if the response is of significant size
+            if len(response_data) > 500:
+                gzip_buffer = io.BytesIO()
+                with gzip.GzipFile(mode='wb', fileobj=gzip_buffer) as f:
+                    f.write(response_data)
+
+                compressed_data = gzip_buffer.getvalue()
+                response.set_data(compressed_data)
+                response.headers['Content-Encoding'] = 'gzip'
+                response.headers['Content-Length'] = len(compressed_data)
+
     return response
 
 if __name__ == "__main__":
