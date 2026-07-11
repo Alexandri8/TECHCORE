@@ -31,7 +31,7 @@ class LoginSecurityTestCase(unittest.TestCase):
             'username': 'a' * 81,
             'password': 'password123'
         }, follow_redirects=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 400)
         self.assertIn(b'Invalid input', response.data)
 
     def test_login_password_too_long(self):
@@ -39,7 +39,7 @@ class LoginSecurityTestCase(unittest.TestCase):
             'username': 'admin',
             'password': 'p' * 257
         }, follow_redirects=True)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 400)
         self.assertIn(b'Invalid input', response.data)
 
     def test_login_success(self):
