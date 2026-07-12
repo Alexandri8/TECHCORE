@@ -3,6 +3,7 @@ from models import db, ContactMessage, User, Payment
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from flask_wtf.csrf import CSRFProtect
 import os
+import re
 import requests
 import uuid
 import gzip
@@ -105,11 +106,11 @@ def login():
         # and prevent resource exhaustion during hashing for extremely long passwords.
         if not isinstance(username, str) or len(username) > 80:
             flash("Invalid input")
-            return render_template("login.html")
+            return render_template("login.html"), 400
 
         if not isinstance(password, str) or len(password) > 256:
             flash("Invalid input")
-            return render_template("login.html")
+            return render_template("login.html"), 400
 
         user = User.query.filter_by(username=username).first()
         
@@ -317,6 +318,13 @@ def apply_optimizations_and_security(response):
     response.vary.add('Accept-Encoding')
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+
+    # Security: Prevent caching of sensitive admin data
+    if request.path.startswith('/admin'):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
         "script-src 'self'; "
