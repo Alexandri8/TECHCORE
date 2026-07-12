@@ -9,3 +9,11 @@
 ## 2025-06-25 - Dynamic Gzip Compression Impact
 **Learning:** Implementing dynamic Gzip compression in the Flask `after_request` hook for text-based mimetypes (HTML, CSS, JS, JSON) provided a ~73% reduction in the home page payload (from 13.3KB to 3.6KB). Using `response.vary.add('Accept-Encoding')` is safer than direct header assignment as it correctly handles existing Vary values.
 **Action:** Always implement Gzip compression for text-heavy applications to significantly reduce TTFB and bandwidth usage, especially when serving through a reverse proxy might not be an option.
+
+## 2026-07-12 - Gzip Compression and direct_passthrough
+**Learning:** Flask's  (used for static files) sets  on the response. This prevents  from working in  hooks, silently failing custom Gzip implementations for CSS/JS.
+**Action:** Set  before calling  in the  handler if compression is desired for static assets.
+
+## 2026-07-12 - Gzip Compression and direct_passthrough
+**Learning:** Flask's `send_from_directory` (used for static files) sets `direct_passthrough=True` on the response. This prevents `response.get_data()` from working in `after_request` hooks, silently failing custom Gzip implementations for CSS/JS.
+**Action:** Set `response.direct_passthrough = False` before calling `get_data()` in the `after_request` handler if compression is desired for static assets.

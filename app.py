@@ -7,14 +7,12 @@ import requests
 import uuid
 import gzip
 import io
+import re
 from sqlalchemy import event
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
-
-# Optimization: Global session for connection pooling
-paystack_session = requests.Session()
 
 app = Flask(__name__)
 # Security: Use environment variable for secret key, fallback to random key
@@ -105,11 +103,11 @@ def login():
         # and prevent resource exhaustion during hashing for extremely long passwords.
         if not isinstance(username, str) or len(username) > 80:
             flash("Invalid input")
-            return render_template("login.html")
+            return render_template("login.html"), 400
 
         if not isinstance(password, str) or len(password) > 256:
             flash("Invalid input")
-            return render_template("login.html")
+            return render_template("login.html"), 400
 
         user = User.query.filter_by(username=username).first()
         
@@ -328,6 +326,12 @@ def apply_optimizations_and_security(response):
         "base-uri 'self'; "
         "form-action 'self';"
     )
+    response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+
+    # Admin specific headers
+    if request.path.startswith('/admin'):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
 
     # 2. Dynamic Gzip Compression
     # Performance: Reduce payload size for text-based responses
@@ -335,14 +339,17 @@ def apply_optimizations_and_security(response):
     if (
         'gzip' in accept_encoding and
         response.status_code == 200 and
-        not response.direct_passthrough and
         'Content-Encoding' not in response.headers and
         (response.mimetype in [
             'text/html', 'text/css', 'application/javascript',
-            'text/javascript', 'application/json', 'application/xml', 'text/xml'
+            'text/javascript', 'application/json', 'application/xml',
+            'text/xml', 'image/svg+xml'
         ])
     ):
+        # Optimization: Set direct_passthrough to False to allow reading data from static files
+        response.direct_passthrough = False
         response_data = response.get_data()
+
         # Only compress if the response is of significant size
         if len(response_data) > 500:
             gzip_buffer = io.BytesIO()
