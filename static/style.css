@@ -40,6 +40,7 @@
 
 html {
     scroll-behavior: smooth;
+    scroll-padding-top: 5.5rem;
 }
 
 body {
@@ -959,14 +960,29 @@ textarea:focus-visible {
     .mobile-menu-btn {
         display: block;
         position: relative;
-        z-index: 2000;
+        z-index: 2001;
         padding: 0.5rem;
     }
-    .nav-links.active { display: flex; animation: fadeInOverlay 0.3s ease; }
-    .nav-links a:not(.btn) { font-size: 1.5rem; font-weight: 600; }
-    .nav-links .nav-btn { width: 80%; max-width: 300px; }
-    @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
-    .mobile-menu-btn { display: block; position: relative; z-index: 1001; }
+
+    .nav-links.active {
+        display: flex;
+        animation: fadeInOverlay 0.3s ease;
+    }
+
+    .nav-links a:not(.btn) {
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .nav-links .nav-btn {
+        width: 80%;
+        max-width: 300px;
+    }
+
+    @keyframes fadeInOverlay {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
 
     .stats-row {
         flex-direction: column;
