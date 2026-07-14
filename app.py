@@ -4,6 +4,7 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from flask_wtf.csrf import CSRFProtect
 import os
 import requests
+import re
 import uuid
 import gzip
 import io
@@ -105,11 +106,11 @@ def login():
         # and prevent resource exhaustion during hashing for extremely long passwords.
         if not isinstance(username, str) or len(username) > 80:
             flash("Invalid input")
-            return render_template("login.html")
+            return render_template("login.html"), 400
 
         if not isinstance(password, str) or len(password) > 256:
             flash("Invalid input")
-            return render_template("login.html")
+            return render_template("login.html"), 400
 
         user = User.query.filter_by(username=username).first()
         
@@ -317,6 +318,14 @@ def apply_optimizations_and_security(response):
     response.vary.add('Accept-Encoding')
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+
+    # 2. Strict Caching for Admin
+    if request.path.startswith('/admin'):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+
+    # 3. Content Security Policy
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
         "script-src 'self'; "
@@ -329,7 +338,7 @@ def apply_optimizations_and_security(response):
         "form-action 'self';"
     )
 
-    # 2. Dynamic Gzip Compression
+    # 4. Dynamic Gzip Compression
     # Performance: Reduce payload size for text-based responses
     accept_encoding = request.headers.get('Accept-Encoding', '').lower()
     if (
