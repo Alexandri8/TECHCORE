@@ -7,14 +7,12 @@ import requests
 import uuid
 import gzip
 import io
+import re
 from sqlalchemy import event
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
-
-# Optimization: Global session for connection pooling
-paystack_session = requests.Session()
 
 app = Flask(__name__)
 # Security: Use environment variable for secret key, fallback to random key
@@ -105,11 +103,11 @@ def login():
         # and prevent resource exhaustion during hashing for extremely long passwords.
         if not isinstance(username, str) or len(username) > 80:
             flash("Invalid input")
-            return render_template("login.html")
+            return render_template("login.html"), 400
 
         if not isinstance(password, str) or len(password) > 256:
             flash("Invalid input")
-            return render_template("login.html")
+            return render_template("login.html"), 400
 
         user = User.query.filter_by(username=username).first()
         
@@ -313,10 +311,20 @@ def apply_optimizations_and_security(response):
     # 1. Security Headers
     response.headers['X-Frame-Options'] = 'SAMEORIGIN'
     response.headers['X-Content-Type-Options'] = 'nosniff'
-    # Optimization: Use response.vary.add to safely append to Vary header
-    response.vary.add('Accept-Encoding')
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    # Security: Restore missing Permissions-Policy header
+    response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+
+    # Security: Restore Admin Cache-Control
+    if request.path.startswith('/admin'):
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+
+    # Performance: Implement long-term caching for static assets
+    if request.path.startswith('/static/'):
+        response.headers['Cache-Control'] = 'public, max-age=31536000'
+
     response.headers['Content-Security-Policy'] = (
         "default-src 'self'; "
         "script-src 'self'; "
@@ -332,10 +340,14 @@ def apply_optimizations_and_security(response):
     # 2. Dynamic Gzip Compression
     # Performance: Reduce payload size for text-based responses
     accept_encoding = request.headers.get('Accept-Encoding', '').lower()
+
+    # Optimization: Set direct_passthrough to False to allow reading response data for static files
+    if response.direct_passthrough:
+        response.direct_passthrough = False
+
     if (
         'gzip' in accept_encoding and
         response.status_code == 200 and
-        not response.direct_passthrough and
         'Content-Encoding' not in response.headers and
         (response.mimetype in [
             'text/html', 'text/css', 'application/javascript',
@@ -354,7 +366,7 @@ def apply_optimizations_and_security(response):
             response.headers['Content-Encoding'] = 'gzip'
             response.headers['Content-Length'] = len(compressed_data)
 
-    # Ensure proxy caches vary by Accept-Encoding
+    # Optimization: Ensure proxy caches vary by Accept-Encoding
     response.vary.add('Accept-Encoding')
     return response
 
