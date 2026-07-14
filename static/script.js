@@ -421,6 +421,34 @@ function closeMobileMenu() {
     }
 }
 
+// 5. ScrollSpy Implementation
+document.addEventListener("DOMContentLoaded", () => {
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-links a:not(.btn)');
+
+    const scrollSpyObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.getAttribute('id');
+                navLinks.forEach(link => {
+                    const isActive = link.getAttribute('href') === `#${id}`;
+                    link.classList.toggle('active', isActive);
+                    if (isActive) {
+                        link.setAttribute('aria-current', 'location');
+                    } else {
+                        link.removeAttribute('aria-current');
+                    }
+                });
+            }
+        });
+    }, {
+        rootMargin: '-20% 0px -70% 0px',
+        threshold: 0
+    });
+
+    sections.forEach(section => scrollSpyObserver.observe(section));
+});
+
 // Close modal when clicking outside
 window.onclick = (e) => {
     if (e.target == document.getElementById("paymentModal")) closePaymentModal();
